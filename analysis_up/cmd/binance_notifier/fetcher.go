@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 )
 
 const binanceCMSBase = "https://www.binance.com"
-const binanceCMSPath = "/bapi/composite/v1/public/cms/article/list"
+const binanceCMSPath = "/bapi/apex/v1/public/cms/article/list"
 
 // AnnouncementFetcher fetches Binance CMS announcements.
 type AnnouncementFetcher struct {
@@ -72,7 +73,9 @@ func (f *AnnouncementFetcher) Fetch(ctx context.Context, catalogID int) ([]Annou
 	}
 
 	var body cmsListResponse
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+	decoder := json.NewDecoder(resp.Body)
+	decoder.UseNumber()
+	if err := decoder.Decode(&body); err != nil {
 		return nil, err
 	}
 
@@ -93,8 +96,8 @@ func (f *AnnouncementFetcher) Fetch(ctx context.Context, catalogID int) ([]Annou
 		}
 
 		releasedAt := time.Now()
-		if article.ReleaseDate > 0 {
-			releasedAt = time.UnixMilli(article.ReleaseDate)
+		if ts := article.releaseTimestamp(); ts > 0 {
+			releasedAt = time.UnixMilli(ts)
 		}
 
 		announcements = append(announcements, Announcement{
@@ -102,7 +105,7 @@ func (f *AnnouncementFetcher) Fetch(ctx context.Context, catalogID int) ([]Annou
 			Title:      strings.TrimSpace(article.Title),
 			URL:        link,
 			ReleasedAt: releasedAt,
-			CatalogID:  article.CatalogID,
+			CatalogID:  article.catalogID(),
 		})
 	}
 
@@ -130,11 +133,53 @@ type cmsListData struct {
 }
 
 type cmsArticle struct {
-	ID          string `json:"id"`
-	Code        string `json:"code"`
-	Title       string `json:"title"`
-	ReleaseDate int64  `json:"releaseDate"`
-	ArticleURL  string `json:"articleUrl"`
-	URL         string `json:"url"`
-	CatalogID   string `json:"catalogId"`
+	ID               string      `json:"id"`
+	Code             string      `json:"code"`
+	Title            string      `json:"title"`
+	ReleaseDate      int64       `json:"releaseDate"`
+	PublishTime      int64       `json:"publishTime"`
+	PublishDate      int64       `json:"publishDate"`
+	ArticleURL       string      `json:"articleUrl"`
+	URL              string      `json:"url"`
+	CatalogIDValue   interface{} `json:"catalogId"`
+	CatalogIDText    string      `json:"catalogIdStr"`
+	CatalogIDAltText string      `json:"catalogIdString"`
+}
+
+func (a cmsArticle) releaseTimestamp() int64 {
+	if a.ReleaseDate > 0 {
+		return a.ReleaseDate
+	}
+	if a.PublishTime > 0 {
+		return a.PublishTime
+	}
+	if a.PublishDate > 0 {
+		return a.PublishDate
+	}
+	return 0
+}
+
+func (a cmsArticle) catalogID() string {
+	if v := strings.TrimSpace(firstNonEmpty(a.CatalogIDText, a.CatalogIDAltText)); v != "" {
+		return v
+	}
+
+	switch v := a.CatalogIDValue.(type) {
+	case nil:
+		return ""
+	case string:
+		return strings.TrimSpace(v)
+	case json.Number:
+		return v.String()
+	case float64:
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return ""
+		}
+		if v == math.Trunc(v) {
+			return strconv.FormatInt(int64(v), 10)
+		}
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
