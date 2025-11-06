@@ -35,19 +35,20 @@ func OpenMySQL(opt Options) (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	if opt.Automigrate {
-		if err := gdb.AutoMigrate(
-			&PortfolioSnapshot{},
-			&Holding{},
-			&WeeklyFlow{},
-			&DailyFlow{},
-			&TransferEvent{},
-			&ScheduledOrder{},
-			&BracketLink{},
-			&BinanceMarketSnapshot{},
-			&BinanceMarketTop{},
-		); err != nil {
-			return nil, err
-		}
-	}
+                if err := gdb.AutoMigrate(
+                        &PortfolioSnapshot{},
+                        &Holding{},
+                        &WeeklyFlow{},
+                        &DailyFlow{},
+                        &TransferEvent{},
+                        &ScheduledOrder{},
+                        &BracketLink{},
+                        &BinanceMarketSnapshot{},
+                        &BinanceMarketTop{},
+                        &BinanceAnnouncement{},
+                ); err != nil {
+                        return nil, err
+                }
+        }
 	return gdb, nil
 }
