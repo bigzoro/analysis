@@ -1,0 +1,243 @@
+<!-- src/views/BinanceGainers.vue -->
+<template>
+  <div class="page">
+    <header class="page-header">
+      <h2>币安涨幅榜（2 小时一段）</h2>
+      <div class="controls">
+        <label>市场：</label>
+        <select v-model="kind" class="select" @change="load">
+          <option value="spot">现货</option>
+          <option value="futures">合约</option>
+        </select>
+
+        <label>日期：</label>
+        <input type="date" v-model="date" class="select" @change="load" />
+
+        <label>时间段：</label>
+        <select v-model="slot" class="select" @change="load">
+          <option value="">全部</option>
+          <option v-for="s in slotOptions" :key="s.value" :value="s.value">
+            {{ s.label }}
+          </option>
+        </select>
+
+        <button class="btn" @click="load" :disabled="loading">
+          {{ loading ? '加载中...' : '刷新' }}
+        </button>
+      </div>
+    </header>
+
+    <section v-if="loading" class="loading">正在获取数据...</section>
+
+    <section v-else>
+      <div v-if="groups.length === 0" class="empty">这一段时间没有数据</div>
+
+      <div v-for="grp in groups" :key="grp.bucket" class="card">
+        <div class="card-head">
+          <div>
+            <div class="bucket">{{ fmtBucket(grp.bucket) }}</div>
+            <div class="fetched">拉取时间：{{ fmtBucket(grp.fetched_at) }}</div>
+          </div>
+          <div class="tag">{{ kindLabel }}</div>
+        </div>
+        <table class="tbl">
+          <thead>
+          <tr>
+            <th style="width: 40px;">#</th>
+            <th>币种</th>
+            <th style="width: 120px;">涨幅(24h)</th>
+            <th style="width: 140px;">最新价</th>
+            <th style="width: 160px;">成交量</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="item in grp.items" :key="item.symbol">
+            <td>{{ item.rank }}</td>
+            <td>{{ item.symbol }}</td>
+            <td :class="item.pct_change >= 0 ? 'up' : 'down'">
+              {{ item.pct_change >= 0 ? '+' : '' }}{{ item.pct_change.toFixed(2) }}%
+            </td>
+            <td>{{ item.last_price }}</td>
+            <td>{{ item.volume }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { api } from '../api/api.js'
+
+const kind = ref('spot')
+const date = ref(new Date().toISOString().slice(0, 10))
+const slot = ref('')
+const loading = ref(false)
+const groups = ref([])
+
+const slotOptions = Array.from({ length: 12 }, (_, i) => {
+  const startH = i * 2
+  const endH = (i + 1) * 2
+  const pad = (n) => String(n).padStart(2, '0')
+  return {
+    value: String(i),
+    label: `${pad(startH)}:00 - ${pad(endH)}:00`
+  }
+})
+
+const kindLabel = computed(() => (kind.value === 'spot' ? '现货' : '合约'))
+
+const fmtBucket = (s) => {
+  if (!s) return '-'
+  return new Date(s).toLocaleString()
+}
+
+async function load () {
+  loading.value = true
+  try {
+    const params = {
+      kind: kind.value,
+      interval: 120,
+    }
+    if (slot.value !== '') {
+      params.date = date.value
+      params.slot = slot.value
+    } else {
+      params.start = date.value
+      params.end = date.value
+    }
+    const res = await api.binanceTop(params)
+    groups.value = Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    console.error(err)
+    groups.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(load)
+</script>
+
+<style scoped>
+.page {
+  max-width: 1180px;
+  margin: 20px auto;
+  padding: 0 14px 40px;
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.page-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ✅ 这里是关键：给 select / date 一个深色背景和清晰的边框 */
+.select {
+  background: #1f2937;
+  border: 1px solid rgba(255,255,255,.12);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 13px;
+}
+
+/* 一些浏览器下 option 还是白底，这里强行让文字黑一点好看 */
+:deep(select option) {
+  color: #111;
+  background: #fff;
+}
+
+.btn {
+  background: #5b74ff;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.loading, .empty {
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.02);
+  padding: 16px;
+  border-radius: 10px;
+  color: rgba(255,255,255,.42);
+}
+.card {
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.03);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 6px;
+}
+.bucket {
+  font-weight: 500;
+}
+.fetched {
+  font-size: 12px;
+  color: rgba(255,255,255,.35);
+}
+.tag {
+  background: rgba(91,116,255,.15);
+  border: 1px solid rgba(91,116,255,.5);
+  border-radius: 9999px;
+  padding: 2px 12px;
+  font-size: 12px;
+}
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+th, td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.02);
+  font-size: 13px;
+}
+th {
+  text-align: left;
+  background: rgba(255,255,255,.015);
+}
+tr:last-child td {
+  border-bottom: none;
+}
+.up {
+  color: #22c55e;
+  font-weight: 500;
+}
+.down {
+  color: #ef4444;
+  font-weight: 500;
+}
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tbl {
+    font-size: 12px;
+  }
+  th:nth-child(5), td:nth-child(5) {
+    display: none;
+  }
+}
+</style>

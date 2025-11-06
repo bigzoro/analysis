@@ -1,0 +1,144 @@
+proxy:
+  enable: true
+  http_proxy: "http://127.0.0.1:10808"
+  https_proxy: "http://127.0.0.1:10808"
+
+pricing:
+  enable: true
+  coingecko_endpoint: "https://api.coingecko.com/api/v3/simple/price"
+  map:
+    BTC: bitcoin
+    ETH: ethereum
+    BNB: binancecoin
+    SOL: solana
+    MATIC: polygon
+    AVAX: avalanche-2
+    FTM: fantom
+    USDT: tether
+    USDC: usd-coin
+    DAI: dai
+
+chains:
+  # 1. BTC —— 走的是你现在 scanner 里那套 esplora
+  - name: bitcoin
+    type: bitcoin
+    esplora: "https://mempool.space/api,https://blockstream.info/api"
+
+  # 2. ETH 主网
+  - name: ethereum
+    type: evm
+    rpc: "https://eth.llamarpc.com https://rpc.ankr.com/eth https://cloudflare-eth.com"
+    erc20:
+      - symbol: USDT
+        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+      - symbol: USDC
+        address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+      - symbol: DAI
+        address: "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+
+  # 3. BSC / BNB Smart Chain
+  - name: bsc
+    type: evm
+    rpc: "https://bsc-dataseed.binance.org"
+    erc20:
+      - symbol: USDT
+        address: "0x55d398326f99059fF775485246999027B3197955"
+      - symbol: USDC
+        address: "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"
+      - symbol: BUSD
+        address: "0xe9e7cea3dedca5984780bafc599bd69add087d56"
+
+  # 4. Arbitrum One
+  - name: arbitrum
+    type: evm
+    rpc: "https://arb1.arbitrum.io/rpc"
+    erc20:
+      - symbol: USDT
+        address: "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9"
+      - symbol: USDC
+        address: "0xaf88d065e77c8cc2239327c5edb3a432268e5831"
+
+  # 5. Optimism
+  - name: optimism
+    type: evm
+    rpc: "https://mainnet.optimism.io"
+    erc20:
+      - symbol: USDT
+        address: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58"
+      - symbol: USDC
+        address: "0x7f5c764cbc14f9669b88837ca1490cca17c31607"
+
+  # 6. Base
+  - name: base
+    type: evm
+    rpc: "https://mainnet.base.org"
+    erc20:
+      - symbol: USDC
+        address: "0x833589fCD6EDb6E08f4c7C32D4f71b54bdA02913"
+
+  # 7. Polygon
+  - name: polygon
+    type: evm
+    rpc: "https://polygon-rpc.com"
+    erc20:
+      - symbol: USDT
+        address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+      - symbol: USDC
+        address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+
+  # 8. Avalanche C-Chain
+  - name: avalanche
+    type: evm
+    rpc: "https://api.avax.network/ext/bc/C/rpc"
+    erc20:
+      - symbol: USDT
+        address: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7"
+      - symbol: USDC
+        address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+
+  # 9. Fantom
+  - name: fantom
+    type: evm
+    rpc: "https://rpc.ftm.tools"
+    erc20:
+      - symbol: USDT
+        address: "0x049d68029688eAbF473097a2fC38ef61633A3C7A"
+      - symbol: USDC
+        address: "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75"
+
+  # 10. Solana —— 你本来代码里就有这段解析
+  - name: solana
+    type: solana
+    rpc: "https://api.mainnet-beta.solana.com,https://rpc.ankr.com/solana"
+    spl:
+      - symbol: USDT
+        mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+      - symbol: USDC
+        mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+
+  # 11. Tron —— 你项目里 config 有，但 scanner 里 **暂时没写 Tron 的同步逻辑**，
+  #      先保留，等你要真扫 Tron，再按这条写一个 scanner 分支就行
+  - name: tron
+    type: tron
+    trc20:
+      - symbol: USDT
+        contract: "TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8"
+      - symbol: USDC
+        contract: "TPYmHEhy5n8TceL7b1bCqQ5c2f3C4f4j3f"
+
+# 可选：手动补充
+entities:
+  - name: binance
+    networks:
+      bitcoin:
+        - "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo"
+      ethereum:
+        - "0x3f5CE5FBFe3E9af3971dD833D26BA9b5C936f0bE"
+      bsc:
+        - "0x0000000000000000000000000000000000001004"
+
+database:
+  dsn: "root:root@tcp(127.0.0.1:3306)/analysis?parseTime=true&charset=utf8mb4&loc=UTC"
+  automigrate: true
+  max_open_conns: 10
+  max_idle_conns: 5
