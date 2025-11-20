@@ -1,0 +1,79 @@
+/* ===== 主题变量（Light） ===== */
+:root{
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: rgba(17,24,39,.12);
+  --primary: #2563eb;
+}
+
+/* ===== 基础重置 ===== */
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 容器与卡片 */
+.container { width: min(1200px, 94vw); margin: 0 auto; padding: 0 8px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.row { display: flex; align-items: center; gap: 10px; }
+.spacer { flex: 1; }
+
+/* 轻量按钮（覆盖 style.css 里的深色按钮） */
+button{
+  height: 34px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #f3f4f6; color: #111827; cursor: pointer;
+}
+button.primary{ background: var(--primary); color:#fff; border-color: transparent; }
+button:disabled{ opacity:.6; cursor: default; }
+
+/* 顶部“运行批次 / 统计时点 / 总额”信息条 */
+.meta-bar{
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  padding:8px 12px; border:1px solid var(--border); border-radius:10px;
+  background:#f9fafb; color:var(--muted); font-size:13px;
+}
+.meta-bar .chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 8px; border:1px solid var(--border); border-radius:8px;
+  background:#fff; color:var(--text);
+}
+
+/* 通用清爽表格 */
+.table{ width:100%; border-collapse:separate; border-spacing:0; font-size:14px; }
+.table th, .table td{ padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.table thead th{ color:#374151; font-weight:600; }
+.table tbody tr:hover{ background:#f9fafb; }
+
+/* 柔和高亮（替代黑条） */
+.table tbody tr.is-active,
+.table tbody tr.selected,
+.table tbody tr.highlight{
+  background:#eef2ff !important; color:var(--text) !important;
+}
+.table tbody tr.is-active td:first-child,
+.table tbody tr.selected  td:first-child,
+.table tbody tr.highlight td:first-child{
+  box-shadow: inset 3px 0 0 0 #3b82f6;
+}
+
+/* 数字列与“持仓”右对齐 */
+.num{ text-align:right; font-variant-numeric:tabular-nums; font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+.table-holdings th:nth-child(3),
+.table-holdings td:nth-child(3),
+.table-holdings th:nth-child(4),
+.table-holdings td:nth-child(4){ text-align:right; font-variant-numeric:tabular-nums; font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
