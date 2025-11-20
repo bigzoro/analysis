@@ -4,14 +4,30 @@
     <header class="page-header">
       <h2>币安涨幅榜（2 小时一段）</h2>
       <div class="controls">
-        <label>日期：</label>
-        <input type="date" v-model="date" class="select" @change="load" />
-        <button class="btn" @click="load" :disabled="loading">
-          {{ loading ? '加载中...' : '刷新' }}
-        </button>
-        <button class="btn btn-secondary" @click="showBlacklistDialog = true">
-          管理黑名单
-        </button>
+        <div class="date-row">
+          <label>日期：</label>
+          <input type="date" v-model="date" class="select" @change="load" />
+          <div class="quick-dates">
+            <span class="quick-label">快速选择：</span>
+            <button
+              v-for="quick in quickDates"
+              :key="quick.value"
+              class="quick-btn"
+              :class="{ active: date === quick.value }"
+              @click="selectDate(quick.value)"
+            >
+              {{ quick.label }}
+            </button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" @click="load" :disabled="loading">
+            {{ loading ? '加载中...' : '刷新' }}
+          </button>
+          <button class="btn btn-secondary" @click="showBlacklistDialog = true">
+            管理黑名单
+          </button>
+        </div>
       </div>
     </header>
 
@@ -142,6 +158,19 @@ import { handleError, handleSuccess } from '../utils/errorHandler.js'
 
 const date = ref(new Date().toISOString().slice(0, 10))
 const loading = ref(false)
+
+const quickDates = computed(() => {
+  const today = new Date()
+  return Array.from({ length: 10 }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(today.getDate() - (9 - i))
+    const value = d.toISOString().slice(0, 10)
+    return {
+      value,
+      label: `${d.getMonth() + 1}/${pad2(d.getDate())}`,
+    }
+  })
+})
 
 const groupsSpot = ref([])     // 现货数据
 const groupsFut  = ref([])     // 合约数据
@@ -275,6 +304,12 @@ const rows = computed(() => {
   return out
 })
 
+function selectDate (value) {
+  if (date.value === value) return
+  date.value = value
+  load()
+}
+
 async function load () {
   loading.value = true
   try {
@@ -371,9 +406,50 @@ onMounted(load)
   align-items: center;
   gap: 14px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 .page-header h2 { font-size: 18px; font-weight: 600; }
-.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.date-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quick-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.quick-label { color: #555; font-size: 13px; }
+.quick-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(0,0,0,.15);
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.quick-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.quick-btn:hover:not(.active) {
+  background: rgba(0,0,0,.04);
+}
 
 /* 控件样式 */
 .select {
