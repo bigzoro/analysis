@@ -8,19 +8,13 @@ import (
 
 // ==================== 限流器 ====================
 
-// RateLimiter 限流器接口
-type RateLimiter interface {
-	Allow(ctx context.Context) bool
-	Wait(ctx context.Context) error
-}
-
 // TokenBucket 令牌桶限流器
 type TokenBucket struct {
-	capacity    int64         // 桶容量
-	tokens      int64         // 当前令牌数
-	refillRate  time.Duration // 补充速率
-	lastRefill  time.Time     // 上次补充时间
-	mu          sync.Mutex
+	capacity   int64         // 桶容量
+	tokens     int64         // 当前令牌数
+	refillRate time.Duration // 补充速率
+	lastRefill time.Time     // 上次补充时间
+	mu         sync.Mutex
 }
 
 // NewTokenBucket 创建令牌桶限流器
@@ -155,4 +149,3 @@ func (sw *SlidingWindow) Wait(ctx context.Context) error {
 		}
 	}
 }
-

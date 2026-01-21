@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "chart.js": "^4.4.0",
     "dayjs": "^1.11.18",
     "echarts": "^6.0.0",
     "pinia": "^3.0.4",

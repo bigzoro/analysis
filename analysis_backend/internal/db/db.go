@@ -9,6 +9,51 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// Database 数据库接口
+type Database interface {
+	// 基础数据库操作
+	DB() (*gorm.DB, error)
+	GormDB() *gorm.DB
+	Close() error
+}
+
+// databaseImpl Database接口的实现
+type databaseImpl struct {
+	gormDB *gorm.DB
+}
+
+// NewDatabase 创建数据库实例
+func NewDatabase(gormDB *gorm.DB) Database {
+	return &databaseImpl{
+		gormDB: gormDB,
+	}
+}
+
+// DB 获取GORM数据库实例
+func (d *databaseImpl) DB() (*gorm.DB, error) {
+	if d.gormDB == nil {
+		return nil, fmt.Errorf("database connection is nil")
+	}
+	return d.gormDB, nil
+}
+
+// GormDB 获取GORM数据库实例（直接返回，无错误检查）
+func (d *databaseImpl) GormDB() *gorm.DB {
+	return d.gormDB
+}
+
+// Close 关闭数据库连接
+func (d *databaseImpl) Close() error {
+	if d.gormDB != nil {
+		sqlDB, err := d.gormDB.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Close()
+	}
+	return nil
+}
+
 type Options struct {
 	DSN             string
 	Automigrate     bool
@@ -18,7 +63,7 @@ type Options struct {
 	ConnMaxIdleTime time.Duration // 连接最大空闲时间
 }
 
-func OpenMySQL(opt Options) (*gorm.DB, error) {
+func OpenMySQL(opt Options) (Database, error) {
 	// 配置日志和准备语句缓存（优化性能）
 	config := &gorm.Config{
 		Logger:                 logger.Default.LogMode(logger.Warn),
@@ -57,6 +102,14 @@ func OpenMySQL(opt Options) (*gorm.DB, error) {
 		sqlDB.SetConnMaxIdleTime(10 * time.Minute)
 	}
 
+	// 死锁优化：设置连接最大等待时间，避免长时间等待导致的死锁
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)  // 连接最大生存时间
+	sqlDB.SetConnMaxIdleTime(10 * time.Minute)   // 连接最大空闲时间
+
+	// 优化查询超时设置，减少死锁等待时间
+	gdb.Exec("SET SESSION innodb_lock_wait_timeout = 10")     // InnoDB锁等待超时10秒
+	gdb.Exec("SET SESSION transaction_isolation = 'READ-COMMITTED'") // 使用读已提交隔离级别，减少锁竞争
+
 	if opt.Automigrate {
 		// 使用 Set 方法确保字段会被添加/修改
 		if err := gdb.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(
@@ -66,6 +119,8 @@ func OpenMySQL(opt Options) (*gorm.DB, error) {
 			&DailyFlow{},
 			&TransferEvent{},
 			&TransferCursor{},
+			&ArkhamWatch{},
+			&WhaleWatch{},
 			&ScheduledOrder{},
 			&BracketLink{},
 			&BinanceMarketSnapshot{},
@@ -77,6 +132,29 @@ func OpenMySQL(opt Options) (*gorm.DB, error) {
 			&CoinRecommendation{},
 			&BacktestRecord{},
 			&SimulatedTrade{},
+			&RecommendationPerformance{},
+			&MarketKline{},
+			&PriceCache{},
+			&TechnicalIndicatorsCache{},
+			&FeatureCache{},
+			&MLModel{},
+			&AutoExecuteSettings{},
+			&CoinCapAssetMapping{},
+			&CoinCapMarketData{},
+			&StrategyExecution{},
+			&StrategyExecutionStep{},
+			&BinanceExchangeInfo{},
+			&BinanceFuturesContract{},
+			&BinanceFundingRate{},
+			&BinanceOrderBookDepth{},
+			&Binance24hStats{},
+			&Binance24hStatsHistory{}, // 24小时统计数据历史表
+			&BinanceTrade{},
+			&FilterCorrection{},
+			// 新增的系统完善相关的表
+			&ExternalOperation{}, // 外部操作记录
+			&OperationLog{},      // 操作日志记录
+			&AuditTrail{},        // 审计追踪记录
 		); err != nil {
 			return nil, fmt.Errorf("AutoMigrate failed: %w", err)
 		}
@@ -87,5 +165,5 @@ func OpenMySQL(opt Options) (*gorm.DB, error) {
 			// 这里不记录日志，因为可能函数不存在
 		}
 	}
-	return gdb, nil
+	return NewDatabase(gdb), nil
 }

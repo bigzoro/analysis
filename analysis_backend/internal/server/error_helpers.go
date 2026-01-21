@@ -13,7 +13,7 @@ import (
 // 用于不是 Server 方法的 handler 函数
 func ErrorResponseHelper(c *gin.Context, statusCode int, message string, err error) {
 	traceID := generateTraceID(c)
-	
+
 	response := APIError{
 		Code:     string(ErrorCodeInternal),
 		Message:  message,
@@ -111,4 +111,3 @@ func logErrorHelper(c *gin.Context, statusCode int, message string, err error, t
 		}
 	}
 }
-

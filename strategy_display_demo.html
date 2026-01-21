@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>策略推荐展示优化演示</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-light: #dbeafe;
+            --success-color: #10b981;
+            --success-light: #dcfce7;
+            --warning-color: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger-color: #ef4444;
+            --danger-light: #fee2e2;
+            --info-color: #06b6d4;
+            --info-light: #cffafe;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --border-color: #e5e7eb;
+            --border-light: #f3f4f6;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin: 0 0 24px 0;
+            font-size: 14px;
+        }
+
+        .comparison {
+            margin-bottom: 32px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+
+        .comparison h2 {
+            margin: 0 0 16px 0;
+            color: var(--text-primary);
+            font-size: 18px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .comparison-item {
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .before {
+            background: var(--danger-light);
+            border-color: var(--danger-color);
+        }
+
+        .after {
+            background: var(--success-light);
+            border-color: var(--success-color);
+        }
+
+        .demo-section {
+            margin-bottom: 24px;
+        }
+
+        .demo-section h3 {
+            margin: 0 0 16px 0;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        /* 策略展示样式 */
+        .strategy-item {
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .strategy-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .strategy-summary {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-primary);
+        }
+
+        .strategy-main-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .strategy-quick-metrics {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .metric {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .metric.score {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .metric.confidence {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .metric.risk::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .strategy-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-badge.status-exists {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .status-badge.status-new {
+            background: var(--info-light);
+            color: var(--info-color);
+        }
+
+        .expand-icon {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .strategy-details {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-light);
+        }
+
+        .strategy-reason {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .metrics-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .metric-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .metric-value.win-rate { color: var(--success-color); }
+        .metric-value.drawdown { color: var(--danger-color); }
+        .metric-value.sharpe { color: #3b82f6; }
+        .metric-value.trades { color: var(--text-secondary); }
+        .metric-value.profit.negative { color: var(--danger-color); }
+        .metric-value.profit:not(.negative) { color: var(--success-color); }
+        .metric-value.volatility { color: var(--warning-color); }
+
+        .strategy-insights {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+        }
+
+        .insight-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .insight-item:last-child {
+            border-bottom: none;
+        }
+
+        .insight-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .insight-value {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .insight-value.positive { color: var(--success-color); }
+        .insight-value.negative { color: var(--danger-color); }
+        .insight-value.good { color: var(--success-color); }
+        .insight-value.poor { color: var(--danger-color); }
+        .confidence-level.high { color: var(--success-color); }
+        .confidence-level.medium { color: var(--warning-color); }
+        .confidence-level.low { color: var(--danger-color); }
+
+        .strategy-market-fit {
+            margin-bottom: 12px;
+        }
+
+        .market-tag {
+            background: var(--info-light);
+            color: var(--info-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .strategy-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary, .btn-primary {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .data-structure {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .field-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+        }
+
+        .field-item {
+            padding: 4px 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid var(--border-light);
+        }
+
+        .field-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .field-type {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 策略推荐展示优化演示</h1>
+        <div class="subtitle">展示完整的策略推荐数据和优化的用户界面</div>
+
+        <div class="comparison">
+            <h2>📊 优化对比</h2>
+            <div class="comparison-grid">
+                <div class="comparison-item before">
+                    <h3>❌ 优化前问题</h3>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li>只显示胜率和夏普比率</li>
+                        <li>缺少最大回撤、总交易等关键指标</li>
+                        <li>没有预期收益和风险分析</li>
+                        <li>信息展示不完整，用户决策困难</li>
+                    </ul>
+                </div>
+                <div class="comparison-item after">
+                    <h3>✅ 优化后改进</h3>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li>展示6个完整性能指标</li>
+                        <li>添加预期收益和风险收益比</li>
+                        <li>提供置信度等级评估</li>
+                        <li>数据驱动的决策支持</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>📋 后端数据结构</h3>
+            <div class="data-structure">
+                <div style="margin-bottom: 12px; font-weight: 600;">MarketStrategyRecommendation {</div>
+                <div class="field-list">
+                    <div class="field-item">
+                        <span class="field-name">type</span> <span class="field-type">string</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">name</span> <span class="field-type">string</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">score</span> <span class="field-type">int</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">confidence</span> <span class="field-type">float64</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">reason</span> <span class="field-type">string</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">exists</span> <span class="field-type">bool</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">win_rate</span> <span class="field-type">float64</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">max_drawdown</span> <span class="field-type">float64</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">total_trades</span> <span class="field-type">float64</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">avg_profit</span> <span class="field-type">float64</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">sharpe_ratio</span> <span class="field-type">float64</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">volatility</span> <span class="field-type">float64</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">risk_level</span> <span class="field-type">string</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-name">suitable_market</span> <span class="field-type">string</span>
+                    </div>
+                </div>
+                <div style="margin-top: 12px;">}</div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>🎨 前端展示效果</h3>
+
+            <!-- 最佳策略横幅 -->
+            <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="font-size: 24px;">👑</div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px 0; font-size: 16px;">网格交易策略</h4>
+                        <p style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.9;">在价格区间内设置多个买卖点，通过低买高卖获得稳定收益</p>
+                        <div style="display: flex; gap: 12px; font-size: 12px;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">评分: 10/10</span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">匹配度: 80%</span>
+                            <span style="background: rgba(16,185,129,0.3); padding: 2px 6px; border-radius: 4px;">风险: 低</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary small">立即配置</button>
+                </div>
+            </div>
+
+            <!-- 策略列表 -->
+            <div id="strategyList">
+                <!-- 策略项将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟完整的策略数据
+        const mockStrategies = [
+            {
+                type: 'grid_trading',
+                name: '网格交易策略',
+                score: 10,
+                confidence: 80,
+                reason: '市场横盘震荡，网格策略可以在价格区间内设置多个买卖点，通过低买高卖获得稳定收益',
+                exists: true,
+                win_rate: 0.67,
+                max_drawdown: 0.08,
+                total_trades: 120,
+                avg_profit: 0.032,
+                sharpe_ratio: 2.2,
+                volatility: 0.15,
+                risk_level: 'low',
+                suitable_market: '横盘震荡市场'
+            },
+            {
+                type: 'breakthrough',
+                name: '突破策略',
+                score: 7,
+                confidence: 45,
+                reason: '市场处于震荡整理阶段，突破策略适合在价格突破关键价位时入场',
+                exists: false,
+                win_rate: 0.58,
+                max_drawdown: 0.20,
+                total_trades: 87,
+                avg_profit: 0.021,
+                sharpe_ratio: 1.9,
+                volatility: 0.22,
+                risk_level: 'high',
+                suitable_market: '震荡整理市场'
+            },
+            {
+                type: 'mean_reversion',
+                name: '均值回归策略',
+                score: 6,
+                confidence: 50,
+                reason: '适合中等波动和震荡环境，当前市场条件相对合适',
+                exists: true,
+                win_rate: 0.62,
+                max_drawdown: 0.15,
+                total_trades: 245,
+                avg_profit: 0.023,
+                sharpe_ratio: 1.8,
+                volatility: 0.18,
+                risk_level: 'medium',
+                suitable_market: '高震荡市场'
+            }
+        ];
+
+        // 计算函数
+        function calculateExpectedReturn(strategy) {
+            if (!strategy.win_rate || !strategy.avg_profit) return 0;
+            const monthlyTrades = strategy.type === 'grid_trading' ? 15 : 8;
+            const expectedMonthlyReturn = strategy.win_rate * strategy.avg_profit * monthlyTrades;
+            return expectedMonthlyReturn * 12 * 100;
+        }
+
+        function calculateRiskRewardRatio(strategy) {
+            if (!strategy.avg_profit || !strategy.max_drawdown) return 0;
+            return Math.abs(strategy.avg_profit / strategy.max_drawdown);
+        }
+
+        function getConfidenceLevel(confidence) {
+            if (confidence >= 80) return 'high';
+            if (confidence >= 60) return 'medium';
+            return 'low';
+        }
+
+        function getConfidenceLevelText(confidence) {
+            if (confidence >= 80) return '高';
+            if (confidence >= 60) return '中';
+            return '低';
+        }
+
+        // 渲染策略列表
+        function renderStrategies() {
+            const container = document.getElementById('strategyList');
+
+            mockStrategies.forEach((strategy, index) => {
+                const expectedReturn = calculateExpectedReturn(strategy);
+                const riskRewardRatio = calculateRiskRewardRatio(strategy);
+                const confidenceLevel = getConfidenceLevel(strategy.confidence);
+                const confidenceText = getConfidenceLevelText(strategy.confidence);
+
+                const strategyHtml = `
+                    <div class="strategy-item">
+                        <!-- 简要信息行 -->
+                        <div class="strategy-summary">
+                            <div class="strategy-main-info">
+                                <span class="strategy-name">${strategy.name}</span>
+                                <div class="strategy-quick-metrics">
+                                    <span class="metric score">${strategy.score}/10</span>
+                                    <span class="metric confidence">${strategy.confidence}%</span>
+                                    <span class="metric risk">${strategy.risk_level === 'low' ? '🛡️' : strategy.risk_level === 'medium' ? '⚖️' : '⚠️'}</span>
+                                </div>
+                            </div>
+                            <div class="strategy-status">
+                                <span class="status-badge ${strategy.exists ? 'status-exists' : 'status-new'}">
+                                    ${strategy.exists ? '已配置' : '新策略'}
+                                </span>
+                                <span class="expand-icon">▶</span>
+                            </div>
+                        </div>
+
+                        <!-- 展开的详细信息 -->
+                        <div class="strategy-details">
+                            <div class="strategy-reason">${strategy.reason}</div>
+
+                            <!-- 完整的性能指标 -->
+                            <div class="metrics-grid">
+                                <div class="metric-row">
+                                    <div class="metric-item">
+                                        <span class="metric-label">胜率</span>
+                                        <span class="metric-value win-rate">${(strategy.win_rate * 100).toFixed(1)}%</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">最大回撤</span>
+                                        <span class="metric-value drawdown">${(strategy.max_drawdown * 100).toFixed(1)}%</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">夏普比率</span>
+                                        <span class="metric-value sharpe">${strategy.sharpe_ratio.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <div class="metric-row">
+                                    <div class="metric-item">
+                                        <span class="metric-label">总交易</span>
+                                        <span class="metric-value trades">${strategy.total_trades}</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">平均利润</span>
+                                        <span class="metric-value profit ${strategy.avg_profit < 0 ? 'negative' : ''}">${(strategy.avg_profit * 100).toFixed(2)}%</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">波动率</span>
+                                        <span class="metric-value volatility">${(strategy.volatility * 100).toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 策略分析洞察 -->
+                            <div class="strategy-insights">
+                                <div class="insight-item">
+                                    <span class="insight-label">预期年化收益</span>
+                                    <span class="insight-value ${expectedReturn > 0 ? 'positive' : 'negative'}">${expectedReturn.toFixed(1)}%</span>
+                                </div>
+                                <div class="insight-item">
+                                    <span class="insight-label">风险收益比</span>
+                                    <span class="insight-value ${riskRewardRatio > 1 ? 'good' : 'poor'}">${riskRewardRatio.toFixed(2)}</span>
+                                </div>
+                                <div class="insight-item">
+                                    <span class="insight-label">置信度等级</span>
+                                    <span class="insight-value confidence-level ${confidenceLevel}">${confidenceText}</span>
+                                </div>
+                            </div>
+
+                            <div class="strategy-market-fit">
+                                <span class="market-tag">${strategy.suitable_market}</span>
+                            </div>
+
+                            <div class="strategy-actions">
+                                <button class="btn-secondary">了解详情</button>
+                                <button class="btn-primary">立即使用</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += strategyHtml;
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderStrategies();
+        });
+    </script>
+</body>
+</html>

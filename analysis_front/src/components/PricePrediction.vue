@@ -10,7 +10,7 @@
     <!-- 当前价格 -->
     <div class="current-price">
       <span class="price-label">当前价格：</span>
-      <span class="price-value">${{ prediction.current_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+      <span class="price-value">${{ prediction.current_price?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
     </div>
 
     <!-- 预测时间周期 -->
@@ -26,7 +26,7 @@
         <div class="prediction-content">
           <div class="predicted-price">
             <span class="price-label">预测价格：</span>
-            <span class="price-value">${{ prediction.pred_24h?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+            <span class="price-value">${{ prediction.pred_24h?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
           </div>
           <div class="price-change" :class="getChangeClass(prediction.change_24h)">
             <span class="change-icon">{{ getChangeIcon(prediction.change_24h) }}</span>
@@ -35,11 +35,11 @@
           <div class="price-range" v-if="prediction.range_24h">
             <div class="range-item">
               <span class="range-label">最低：</span>
-              <span class="range-value">${{ prediction.range_24h.min?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+              <span class="range-value">${{ prediction.range_24h.min?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
             </div>
             <div class="range-item">
               <span class="range-label">最高：</span>
-              <span class="range-value">${{ prediction.range_24h.max?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+              <span class="range-value">${{ prediction.range_24h.max?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
             </div>
           </div>
         </div>
@@ -56,7 +56,7 @@
         <div class="prediction-content">
           <div class="predicted-price">
             <span class="price-label">预测价格：</span>
-            <span class="price-value">${{ prediction.pred_7d?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+            <span class="price-value">${{ prediction.pred_7d?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
           </div>
           <div class="price-change" :class="getChangeClass(prediction.change_7d)">
             <span class="change-icon">{{ getChangeIcon(prediction.change_7d) }}</span>
@@ -65,11 +65,11 @@
           <div class="price-range" v-if="prediction.range_7d">
             <div class="range-item">
               <span class="range-label">最低：</span>
-              <span class="range-value">${{ prediction.range_7d.min?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+              <span class="range-value">${{ prediction.range_7d.min?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
             </div>
             <div class="range-item">
               <span class="range-label">最高：</span>
-              <span class="range-value">${{ prediction.range_7d.max?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+              <span class="range-value">${{ prediction.range_7d.max?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
             </div>
           </div>
         </div>
@@ -86,7 +86,7 @@
         <div class="prediction-content">
           <div class="predicted-price">
             <span class="price-label">预测价格：</span>
-            <span class="price-value">${{ prediction.pred_30d?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+            <span class="price-value">${{ prediction.pred_30d?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
           </div>
           <div class="price-change" :class="getChangeClass(prediction.change_30d)">
             <span class="change-icon">{{ getChangeIcon(prediction.change_30d) }}</span>
@@ -95,11 +95,11 @@
           <div class="price-range" v-if="prediction.range_30d">
             <div class="range-item">
               <span class="range-label">最低：</span>
-              <span class="range-value">${{ prediction.range_30d.min?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+              <span class="range-value">${{ prediction.range_30d.min?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
             </div>
             <div class="range-item">
               <span class="range-label">最高：</span>
-              <span class="range-value">${{ prediction.range_30d.max?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-' }}</span>
+              <span class="range-value">${{ prediction.range_30d.max?.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) || '-' }}</span>
             </div>
           </div>
         </div>

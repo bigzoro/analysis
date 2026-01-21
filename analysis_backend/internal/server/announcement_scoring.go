@@ -36,7 +36,7 @@ func (s *Server) GetAnnouncementScoreForSymbol(ctx context.Context, baseSymbol s
 	// 使用更精确的匹配方式
 	symbolUpper := strings.ToUpper(baseSymbol)
 	symbolLower := strings.ToLower(baseSymbol)
-	
+
 	var announcements []pdb.Announcement
 	err := s.db.DB().Where("release_time >= ?", since).
 		Where("(tags LIKE ? OR tags LIKE ? OR title LIKE ? OR title LIKE ? OR summary LIKE ? OR summary LIKE ?)",
@@ -266,4 +266,3 @@ func (s *Server) GetAnnouncementScoreForSymbolsWithDetails(ctx context.Context, 
 
 	return result, nil
 }
-

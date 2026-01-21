@@ -1,10 +1,12 @@
 package server
 
 import (
+	"net/http"
 	"strconv"
 	"strings"
 
 	pdb "analysis/internal/db"
+	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 )
 
@@ -135,3 +137,7 @@ type HoldingDTO struct {
 	ValueUSD float64 `json:"value_usd"`
 }
 
+// WebSocket upgrader for all WebSocket connections
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
+}

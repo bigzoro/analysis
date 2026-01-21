@@ -78,12 +78,12 @@ func (r *RedisCache) Exists(ctx context.Context, key string) (bool, error) {
 // DeletePattern 按模式删除缓存（优化：使用管道批量删除）
 func (r *RedisCache) DeletePattern(ctx context.Context, pattern string) error {
 	iter := r.client.Scan(ctx, 0, pattern, 100).Iterator() // 每次扫描100个键
-	batchSize := 100 // 每批删除100个键
-	
+	batchSize := 100                                       // 每批删除100个键
+
 	var keys []string
 	for iter.Next(ctx) {
 		keys = append(keys, iter.Val())
-		
+
 		// 达到批次大小时，批量删除
 		if len(keys) >= batchSize {
 			if err := r.batchDelete(ctx, keys); err != nil {
@@ -92,16 +92,16 @@ func (r *RedisCache) DeletePattern(ctx context.Context, pattern string) error {
 			keys = keys[:0] // 清空切片，保留容量
 		}
 	}
-	
+
 	if err := iter.Err(); err != nil {
 		return err
 	}
-	
+
 	// 删除剩余的键
 	if len(keys) > 0 {
 		return r.batchDelete(ctx, keys)
 	}
-	
+
 	return nil
 }
 
@@ -110,7 +110,7 @@ func (r *RedisCache) batchDelete(ctx context.Context, keys []string) error {
 	if len(keys) == 0 {
 		return nil
 	}
-	
+
 	pipe := r.client.Pipeline()
 	for _, key := range keys {
 		pipe.Del(ctx, key)

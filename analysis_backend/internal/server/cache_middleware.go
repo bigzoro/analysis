@@ -51,26 +51,26 @@ func CacheMiddleware(cache pdb.CacheInterface, cacheType pdb.CacheType, ttl time
 			c.Header("X-Cache", "HIT")
 			c.Data(http.StatusOK, "application/json", cached)
 			c.Abort()
-			
+
 			// 记录统计（简化处理）
 			// keyPrefix := extractKeyPrefix(key)
 			// 这里需要访问统计收集器
-			
+
 			return
 		}
 
 		// 缓存未命中，继续处理请求
 		c.Header("X-Cache", "MISS")
-		
+
 		// 记录统计
 		keyPrefix := extractKeyPrefix(key)
 		pdb.GetCacheStats(keyPrefix) // 初始化统计
 		// 这里需要访问统计收集器，暂时简化处理
-		
+
 		// 使用自定义 ResponseWriter 捕获响应
 		w := &cacheResponseWriter{
 			ResponseWriter: c.Writer,
-			body:          make([]byte, 0),
+			body:           make([]byte, 0),
 		}
 		c.Writer = w
 
@@ -85,12 +85,12 @@ func CacheMiddleware(cache pdb.CacheInterface, cacheType pdb.CacheType, ttl time
 			} else {
 				cacheTTL = pdb.DefaultCacheTTL.GetTTL(cacheType)
 			}
-			
+
 			// 优化：使用协程池异步写入缓存，避免创建过多 goroutine
 			cacheKey := key
 			cacheData := make([]byte, len(w.body))
 			copy(cacheData, w.body)
-			
+
 			// 使用全局缓存写入池（如果存在）
 			if globalCachePool != nil {
 				globalCachePool.Submit(func() {
@@ -170,7 +170,7 @@ func AnnouncementsCacheKey(c *gin.Context) string {
 	exchange := c.Query("exchange")
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
-	
+
 	// 优化：使用 strings.Builder 构建键
 	var keyBuilder strings.Builder
 	keyBuilder.Grow(200) // 预估大小
@@ -194,7 +194,7 @@ func AnnouncementsCacheKey(c *gin.Context) string {
 	keyBuilder.WriteString(startDate)
 	keyBuilder.WriteString(":")
 	keyBuilder.WriteString(endDate)
-	
+
 	key := keyBuilder.String()
 	hash := md5.Sum([]byte(key))
 	return BuildCacheKeyWithHash("cache:v1:announcements", fmt.Sprintf("%x", hash))
@@ -207,7 +207,7 @@ func MarketCacheKey(c *gin.Context) string {
 	date := c.Query("date")
 	slot := c.Query("slot")
 	tz := c.Query("tz")
-	
+
 	// 优化：使用 strings.Builder 构建键
 	var keyBuilder strings.Builder
 	keyBuilder.Grow(100)
@@ -221,7 +221,7 @@ func MarketCacheKey(c *gin.Context) string {
 	keyBuilder.WriteString(slot)
 	keyBuilder.WriteString(":")
 	keyBuilder.WriteString(tz)
-	
+
 	key := keyBuilder.String()
 	hash := md5.Sum([]byte(key))
 	return BuildCacheKeyWithHash("cache:v1:market", fmt.Sprintf("%x", hash))
@@ -235,7 +235,7 @@ func TwitterPostsCacheKey(c *gin.Context) string {
 	pageSize := c.Query("page_size")
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
-	
+
 	// 优化：使用 strings.Builder 构建键
 	var keyBuilder strings.Builder
 	keyBuilder.Grow(150)
@@ -251,7 +251,7 @@ func TwitterPostsCacheKey(c *gin.Context) string {
 	keyBuilder.WriteString(startDate)
 	keyBuilder.WriteString(":")
 	keyBuilder.WriteString(endDate)
-	
+
 	key := keyBuilder.String()
 	hash := md5.Sum([]byte(key))
 	return BuildCacheKeyWithHash("cache:v1:twitter", fmt.Sprintf("%x", hash))
@@ -270,7 +270,7 @@ func FlowsCacheKey(c *gin.Context) string {
 	start := c.Query("start")
 	end := c.Query("end")
 	latest := c.Query("latest")
-	
+
 	// 优化：使用 strings.Builder 构建键
 	var keyBuilder strings.Builder
 	keyBuilder.Grow(100)
@@ -284,7 +284,7 @@ func FlowsCacheKey(c *gin.Context) string {
 	keyBuilder.WriteString(end)
 	keyBuilder.WriteString(":")
 	keyBuilder.WriteString(latest)
-	
+
 	key := keyBuilder.String()
 	hash := md5.Sum([]byte(key))
 	return BuildCacheKeyWithHash("cache:v1:flows", fmt.Sprintf("%x", hash))
@@ -391,7 +391,7 @@ func (s *Server) getCachedBlacklistMap(ctx context.Context, kind string) (map[st
 		cacheKey := key
 		cacheData := make([]byte, len(data))
 		copy(cacheData, data)
-		
+
 		if globalCachePool != nil {
 			globalCachePool.Submit(func() {
 				if err := s.cache.Set(context.Background(), cacheKey, cacheData, 5*time.Minute); err != nil {
@@ -436,4 +436,3 @@ func (s *Server) InvalidateBlacklistCache(ctx context.Context, kind string) erro
 	key := BuildCacheKey("cache:v1:blacklist", kind)
 	return s.cache.Delete(ctx, key)
 }
-

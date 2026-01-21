@@ -70,7 +70,7 @@ func (h *wsHub) run() {
 				clients = append(clients, c)
 			}
 			h.mu.RUnlock()
-			
+
 			// 并发发送消息（优化：使用协程池限制并发）
 			var wg sync.WaitGroup
 			for _, c := range clients {
@@ -97,8 +97,6 @@ func (h *wsHub) run() {
 		}
 	}
 }
-
-var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 
 /*** ===== DTO ===== ***/
 

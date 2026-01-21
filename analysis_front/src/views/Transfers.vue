@@ -1,5 +1,6 @@
 <template>
-  <section class="panel">
+  <div class="container">
+    <section class="panel">
     <div class="row topbar">
       <h2>转账实时</h2>
       <div class="spacer"></div>
@@ -171,6 +172,7 @@
       @change="onPaginationChange"
     />
   </section>
+  </div>
 </template>
 
 <script setup>

@@ -41,6 +41,11 @@ func (cw *CacheWarmup) WarmupCommonData(ctx context.Context) error {
 		}
 	}
 
+	// 预热推荐数据
+	if err := cw.warmupRecommendations(ctx); err != nil {
+		log.Printf("[CacheWarmup] Failed to warmup recommendations: %v", err)
+	}
+
 	log.Println("[CacheWarmup] Cache warmup completed")
 	return nil
 }
@@ -126,6 +131,38 @@ func (cw *CacheWarmup) WarmupPortfolio(ctx context.Context, entities []string) e
 		}
 	}
 
+	return nil
+}
+
+// warmupRecommendations 预热推荐数据
+func (cw *CacheWarmup) warmupRecommendations(ctx context.Context) error {
+	if cw.server.recommendationCache == nil {
+		log.Println("[CacheWarmup] Recommendation cache not available, skipping recommendation warmup")
+		return nil
+	}
+
+	log.Println("[CacheWarmup] Warming up recommendation cache...")
+
+	// 预热常用推荐查询
+	commonQueries := []RecommendationQueryParams{
+		{Kind: "spot", Limit: 5},
+		{Kind: "futures", Limit: 5},
+		{Kind: "spot", Limit: 10},
+		{Kind: "futures", Limit: 10},
+	}
+
+	for _, query := range commonQueries {
+		log.Printf("[CacheWarmup] Warming up recommendation: kind=%s, limit=%d", query.Kind, query.Limit)
+
+		// 调用推荐缓存预热
+		if _, err := cw.server.recommendationCache.GetRecommendationsWithCache(ctx, query); err != nil {
+			log.Printf("[CacheWarmup] Failed to warmup recommendation (kind=%s, limit=%d): %v", query.Kind, query.Limit, err)
+		} else {
+			log.Printf("[CacheWarmup] Successfully warmed up recommendation: kind=%s, limit=%d", query.Kind, query.Limit)
+		}
+	}
+
+	log.Println("[CacheWarmup] Recommendation cache warmup completed")
 	return nil
 }
 

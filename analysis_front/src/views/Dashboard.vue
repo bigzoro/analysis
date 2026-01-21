@@ -1,5 +1,6 @@
 <template>
-  <section class="panel">
+  <div class="container">
+    <section class="panel">
     <div class="row">
       <h2>仪表盘</h2>
       <div class="spacer"></div>
@@ -23,6 +24,7 @@
   <section style="margin-top:12px;">
     <HoldingsTable v-if="data" :holdings="data.holdings" :total="data.total_usd" />
   </section>
+  </div>
 </template>
 
 <script setup>

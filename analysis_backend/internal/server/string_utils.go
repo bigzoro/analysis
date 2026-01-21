@@ -14,32 +14,32 @@ func BuildCacheKey(parts ...string) string {
 	if len(parts) == 0 {
 		return ""
 	}
-	
+
 	var builder strings.Builder
 	// 预估大小：每个部分平均10个字符 + 分隔符
 	builder.Grow(len(parts) * 12)
-	
+
 	for i, part := range parts {
 		if i > 0 {
 			builder.WriteString(":")
 		}
 		builder.WriteString(part)
 	}
-	
+
 	return builder.String()
 }
 
 // BuildCacheKeyWithHash 构建带哈希的缓存键（优化：使用 strings.Builder）
 func BuildCacheKeyWithHash(prefix string, key string) string {
 	hash := md5.Sum([]byte(key))
-	
+
 	var builder strings.Builder
 	// 预估大小：prefix + hash (32 chars) + 分隔符
 	builder.Grow(len(prefix) + 35)
 	builder.WriteString(prefix)
 	builder.WriteString(":")
 	builder.WriteString(fmt.Sprintf("%x", hash))
-	
+
 	return builder.String()
 }
 
@@ -48,7 +48,7 @@ func BuildLogMessage(parts ...string) string {
 	if len(parts) == 0 {
 		return ""
 	}
-	
+
 	var builder strings.Builder
 	// 预估大小
 	totalLen := 0
@@ -56,14 +56,14 @@ func BuildLogMessage(parts ...string) string {
 		totalLen += len(part)
 	}
 	builder.Grow(totalLen + len(parts)*2) // 额外空间用于分隔符
-	
+
 	for i, part := range parts {
 		if i > 0 {
 			builder.WriteString(" ")
 		}
 		builder.WriteString(part)
 	}
-	
+
 	return builder.String()
 }
 
@@ -72,19 +72,19 @@ func FormatErrorLog(traceID string, statusCode int, message string, err error, m
 	var builder strings.Builder
 	// 预估大小
 	builder.Grow(100 + len(traceID) + len(message) + len(method) + len(path) + len(query))
-	
+
 	builder.WriteString("[ERROR] [")
 	builder.WriteString(traceID)
 	builder.WriteString("] HTTP ")
 	builder.WriteString(strconv.Itoa(statusCode))
 	builder.WriteString(": ")
 	builder.WriteString(message)
-	
+
 	if err != nil {
 		builder.WriteString(" - ")
 		builder.WriteString(err.Error())
 	}
-	
+
 	if method != "" || path != "" {
 		builder.WriteString(" | Method: ")
 		builder.WriteString(method)
@@ -95,7 +95,6 @@ func FormatErrorLog(traceID string, statusCode int, message string, err error, m
 			builder.WriteString(query)
 		}
 	}
-	
+
 	return builder.String()
 }
-

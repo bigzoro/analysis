@@ -197,7 +197,7 @@ func (s *Server) ListTwitterPosts(c *gin.Context) {
 	if endDate != "" {
 		if t, err := time.Parse("2006-01-02", endDate); err == nil {
 			// 结束日期包含当天，所以加一天并减1秒
-			endTime := t.UTC().Add(24*time.Hour).Add(-time.Second)
+			endTime := t.UTC().Add(24 * time.Hour).Add(-time.Second)
 			q = q.Where("tweet_time <= ?", endTime)
 		}
 	}

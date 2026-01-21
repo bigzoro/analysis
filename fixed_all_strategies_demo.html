@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全部策略筛选修复演示</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-light: #dbeafe;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #e5e7eb;
+            --border-light: #f3f4f6;
+            --radius-md: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            color: #111827;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin: 0 0 24px 0;
+            font-size: 14px;
+        }
+
+        .demo-section {
+            margin-bottom: 32px;
+        }
+
+        .demo-section h3 {
+            margin: 0 0 16px 0;
+            color: #111827;
+            font-size: 18px;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary-color);
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-link:hover {
+            background: var(--primary-light);
+        }
+
+        .strategy-item {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .strategy-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .strategy-item.strategy-top-item {
+            border-left: 4px solid var(--primary-color);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(29, 78, 216, 0.05));
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .strategy-item.strategy-top-item .strategy-name {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .strategy-summary {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-primary);
+            cursor: pointer;
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .strategy-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-badge.status-exists {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .status-badge.status-new {
+            background: var(--warning-light);
+            color: var(--warning-color);
+        }
+
+        .expand-icon {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .strategy-details {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-light);
+            display: none;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .strategy-item.expanded .strategy-details {
+            display: block;
+        }
+
+        .problem-highlight {
+            background: var(--danger-light);
+            border: 1px solid var(--danger-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .problem-highlight h4 {
+            margin: 0 0 8px 0;
+            color: var(--danger-color);
+        }
+
+        .solution-highlight {
+            background: var(--success-light);
+            border: 1px solid var(--success-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .solution-highlight h4 {
+            margin: 0 0 8px 0;
+            color: var(--success-color);
+        }
+
+        .code-example {
+            background: #f8fafc;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #24292e;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 全部策略筛选修复演示</h1>
+        <div class="subtitle">修复"全部策略"筛选条件不能正确显示所有策略的问题</div>
+
+        <div class="demo-section">
+            <h3>❌ 问题描述</h3>
+            <div class="problem-highlight">
+                <h4>原始问题</h4>
+                <p>用户选择"全部策略"筛选条件时，仍然只显示前3个策略，而不是显示所有可用的策略。</p>
+                <div class="code-example">
+// 问题代码
+case 'all':
+  filtered = showAllStrategies.value ? strategies : strategies.slice(0, 3)
+  break
+                </div>
+                <p><strong>原因：</strong>"全部策略"逻辑仍然依赖于 <code>showAllStrategies</code> 变量，而该变量默认值为 false。</p>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>✅ 修复方案</h3>
+            <div class="solution-highlight">
+                <h4>修复后的逻辑</h4>
+                <p>让"全部策略"真正显示所有策略，不再依赖其他变量。</p>
+                <div class="code-example">
+// 修复后的代码
+case 'all':
+  filtered = strategies // 直接显示所有策略
+  break
+                </div>
+                <p><strong>改进：</strong>当用户选择"全部策略"时，立即显示所有可用策略，无需额外的展开操作。</p>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>🎮 交互演示</h3>
+            <div class="filter-controls">
+                <button class="filter-btn active" onclick="setFilter('top3')">前3名</button>
+                <button class="filter-btn" onclick="setFilter('high_score')">高评分(>7分)</button>
+                <button class="filter-btn" onclick="setFilter('low_risk')">低风险</button>
+                <button class="filter-btn" onclick="setFilter('all')">全部策略</button>
+                <button id="expandBtn" class="btn-link" onclick="toggleExpandedView()" style="display: none;">
+                    展开全部
+                </button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalCount">3</span>
+                    <span class="stat-label">显示策略数</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="filterType">前3名</span>
+                    <span class="stat-label">当前筛选</span>
+                </div>
+            </div>
+
+            <div id="strategyList">
+                <!-- 策略列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟策略数据
+        const mockStrategies = [
+            { type: 'grid_trading', name: '网格交易策略', score: 10, risk_level: 'low', exists: true },
+            { type: 'breakthrough', name: '突破策略', score: 7, risk_level: 'high', exists: false },
+            { type: 'mean_reversion', name: '均值回归策略', score: 6, risk_level: 'medium', exists: true },
+            { type: 'rsi', name: 'RSI策略', score: 8, risk_level: 'low', exists: false },
+            { type: 'macd', name: 'MACD策略', score: 5, risk_level: 'medium', exists: false },
+            { type: 'bollinger', name: '布林带策略', score: 7, risk_level: 'medium', exists: true },
+            { type: 'trend_following', name: '趋势跟踪策略', score: 6, risk_level: 'high', exists: false }
+        ];
+
+        let currentFilter = 'top3';
+        let showAllStrategies = false;
+        let expandedStrategies = [];
+
+        // 修复后的筛选逻辑
+        function getFilteredStrategies(filter) {
+            const strategies = [...mockStrategies];
+
+            switch (filter) {
+                case 'top3':
+                    return showAllStrategies ? strategies : strategies.slice(0, 3);
+                case 'high_score':
+                    const highScore = strategies.filter(s => s.score >= 7);
+                    return showAllStrategies ? highScore : highScore.slice(0, 3);
+                case 'low_risk':
+                    const lowRisk = strategies.filter(s => s.risk_level === 'low');
+                    return showAllStrategies ? lowRisk : lowRisk.slice(0, 3);
+                case 'all':
+                    return strategies; // 修复：直接返回所有策略
+                default:
+                    return showAllStrategies ? strategies : strategies.slice(0, 3);
+            }
+        }
+
+        // 设置筛选器
+        function setFilter(filter) {
+            currentFilter = filter;
+            showAllStrategies = false; // 重置展开状态
+
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 控制展开按钮显示
+            const expandBtn = document.getElementById('expandBtn');
+            if (filter === 'all') {
+                expandBtn.style.display = 'none'; // 全部策略时隐藏展开按钮
+            } else {
+                expandBtn.style.display = 'inline-block';
+                expandBtn.textContent = showAllStrategies ? '收起' : '展开全部';
+            }
+
+            renderStrategies();
+        }
+
+        // 切换展开视图
+        function toggleExpandedView() {
+            showAllStrategies = !showAllStrategies;
+            const expandBtn = document.getElementById('expandBtn');
+            expandBtn.textContent = showAllStrategies ? '收起' : '展开全部';
+            renderStrategies();
+        }
+
+        // 渲染策略列表
+        function renderStrategies() {
+            const container = document.getElementById('strategyList');
+            container.innerHTML = '';
+
+            const strategies = getFilteredStrategies(currentFilter);
+
+            // 更新统计信息
+            document.getElementById('totalCount').textContent = strategies.length;
+            const filterNames = {
+                'top3': '前3名',
+                'high_score': '高评分',
+                'low_risk': '低风险',
+                'all': '全部策略'
+            };
+            document.getElementById('filterType').textContent = filterNames[currentFilter];
+
+            strategies.forEach((strategy, index) => {
+                const isTopItem = index === 0 && currentFilter === 'top3'; // 第一名标识
+                const isExpanded = expandedStrategies.includes(strategy.type);
+
+                const strategyHtml = `
+                    <div class="strategy-item ${isTopItem ? 'strategy-top-item' : ''} ${isExpanded ? 'expanded' : ''}">
+                        <div class="strategy-summary" onclick="toggleExpand('${strategy.type}')">
+                            <span class="strategy-name">${strategy.name}</span>
+                            <div class="strategy-status">
+                                <span class="status-badge ${strategy.exists ? 'status-exists' : 'status-new'}">
+                                    ${strategy.exists ? '已配置' : '新策略'}
+                                </span>
+                                <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+                            </div>
+                        </div>
+                        <div class="strategy-details">
+                            评分: ${strategy.score}/10 | 风险等级: ${strategy.risk_level}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += strategyHtml;
+            });
+        }
+
+        // 切换展开状态
+        function toggleExpand(strategyType) {
+            const index = expandedStrategies.indexOf(strategyType);
+            if (index > -1) {
+                expandedStrategies.splice(index, 1);
+            } else {
+                expandedStrategies.push(strategyType);
+            }
+            renderStrategies();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderStrategies();
+        });
+    </script>
+</body>
+</html>

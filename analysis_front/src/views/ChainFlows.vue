@@ -1,5 +1,6 @@
 <template>
-  <section class="panel">
+  <div class="container">
+    <section class="panel">
     <!-- 顶部：同一行 交易所 + 链 -->
     <div class="row topbar">
       <h2>资金链</h2>
@@ -73,6 +74,7 @@
       </main>
     </div>
   </section>
+  </div>
 </template>
 
 <script setup>

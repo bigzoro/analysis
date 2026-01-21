@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>策略显示测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .strategy-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .strategy-title-section h4 {
+            margin: 0 0 8px 0;
+            color: #1e293b;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .condition-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .condition-tag.basic-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+            font-weight: 500;
+        }
+
+        .condition-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .condition-tag {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .condition-tag.futures-short {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+
+        .test-title {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .description {
+            background: #e0f2fe;
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #0c4a6e;
+        }
+
+        .description h3 {
+            margin: 0 0 8px 0;
+            color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="test-title">🎯 策略显示功能测试</h1>
+
+    <div class="description">
+        <h3>📋 测试说明</h3>
+        <p>此页面用于测试策略列表和新建订单页面的显示功能：</p>
+        <ul>
+            <li>✅ 策略列表：交易类型和保证金模式的基础信息显示</li>
+            <li>✅ 新建订单页面：策略详情的完整信息显示</li>
+            <li>✅ 合约涨幅开空策略的醒目显示</li>
+            <li>✅ 自动操作类型设置：选择策略后自动切换到对应的操作类型</li>
+        </ul>
+
+        <div style="margin-top: 20px; padding: 16px; background: #e0f2fe; border-radius: 8px; border-left: 4px solid #0284c7;">
+            <h3 style="color: #0369a1; margin: 0 0 12px 0;">💡 逐仓 vs 全仓模式详解</h3>
+            <p style="margin: 0; color: #0c4a6e;"><strong>以 FHEUSDT 交易为例：</strong></p>
+        </div>
+    </div>
+
+    <!-- 测试策略1：传统策略 -->
+    <div class="strategy-item">
+        <div class="strategy-header">
+            <div class="strategy-title-section">
+                <h4>传统量化策略</h4>
+            </div>
+        </div>
+
+        <div class="condition-summary">
+            <div class="condition-tag basic-info">交易类型: 合约交易</div>
+            <div class="condition-tag basic-info">保证金模式: 逐仓</div>
+            <div class="condition-tag">
+                市值&lt;5000万不开空
+            </div>
+            <div class="condition-tag">
+                涨幅前7位 & 市值&gt;5000万 → 开空3.0倍
+            </div>
+            <div class="condition-tag futures-short">
+                📈 合约涨幅开空: 前5名 & 资金费率&gt;-0.005% → 开空3.0倍
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试策略2：技术指标策略 -->
+    <div class="strategy-item">
+        <div class="strategy-header">
+            <div class="strategy-title-section">
+                <h4>技术指标策略</h4>
+            </div>
+        </div>
+
+            <div class="condition-tag basic-info">交易类型: 两者皆可</div>
+            <div class="condition-tag basic-info">保证金模式: 全仓</div>
+
+        <div class="condition-summary">
+            <div class="condition-tag">
+                📈 均线策略: [质量优先] EMA(5,20) 金叉买入(上涨趋势)
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试策略3：均值回归策略 -->
+    <div class="strategy-item">
+        <div class="strategy-header">
+            <div class="strategy-title-section">
+                <h4>智能均值回归策略</h4>
+            </div>
+        </div>
+
+            <div class="condition-tag basic-info">交易类型: 现货交易</div>
+
+        <div class="condition-summary">
+            <div class="condition-tag">
+                🔄 均值回归策略[自适应模式]: 周期20天 | 布林带2.0倍 | RSI(30-70) | 价格通道20天 | 最小强度0.5
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟Vue.js的辅助函数
+        function getTradingTypeText(tradingType) {
+            const typeMap = {
+                'spot': '现货交易',
+                'futures': '合约交易',
+                'both': '两者皆可'
+            }
+            return typeMap[tradingType] || tradingType || '未设置'
+        }
+
+        function getMarginModeText(marginMode) {
+            const modeMap = {
+                'ISOLATED': '逐仓',
+                'CROSS': '全仓'
+            }
+            return modeMap[marginMode] || marginMode || '未设置'
+        }
+
+        // 测试函数调用
+        console.log('交易类型测试:', getTradingTypeText('futures'))
+        console.log('保证金模式测试:', getMarginModeText('ISOLATED'))
+    </script>
+</body>
+</html>

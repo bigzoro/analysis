@@ -28,4 +28,3 @@ var TwitterHTTPClient = &http.Client{
 		DisableKeepAlives:   false,
 	},
 }
-

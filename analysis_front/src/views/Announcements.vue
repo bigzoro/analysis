@@ -151,7 +151,7 @@
             <th class="col-cat">分类</th>
             <th class="col-exchange">交易所</th>
             <th class="col-time">时间</th>
-            <th class="col-link">链接</th>
+            <!-- <th class="col-link">链接</th> -->
           </tr>
           </thead>
           <tbody>
@@ -169,9 +169,9 @@
               <span v-else class="muted">-</span>
             </td>
             <td class="mono time">{{ fmt(n.release_time) }}</td>
-            <td class="link-cell">
+            <!-- <td class="link-cell">
               <a class="link" :href="getAnnouncementUrl(n)" target="_blank" rel="noopener">打开</a>
-            </td>
+            </td> -->
           </tr>
           </tbody>
         </table>
@@ -432,7 +432,12 @@ load()
 
 <style scoped>
 /* ========== 白底黑字（跟随全局变量） ========== */
-.page { padding: 16px; color: var(--text); }
+.page {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 20px 14px 40px;
+  color: var(--text);
+}
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);

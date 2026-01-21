@@ -11,33 +11,33 @@ import (
 type CacheTTL struct {
 	// 实时数据：1-5 分钟
 	RealTime time.Duration
-	
+
 	// 聚合数据：5-15 分钟
 	Aggregate time.Duration
-	
+
 	// 静态数据：30 分钟 - 1 小时
 	Static time.Duration
-	
+
 	// 长期数据：1-24 小时
 	LongTerm time.Duration
 }
 
 // DefaultCacheTTL 默认缓存 TTL 配置
 var DefaultCacheTTL = CacheTTL{
-	RealTime:  2 * time.Minute,   // 实时数据：2分钟
-	Aggregate: 10 * time.Minute,  // 聚合数据：10分钟
-	Static:    30 * time.Minute,   // 静态数据：30分钟
-	LongTerm:  2 * time.Hour,     // 长期数据：2小时
+	RealTime:  2 * time.Minute,  // 实时数据：2分钟
+	Aggregate: 10 * time.Minute, // 聚合数据：10分钟
+	Static:    30 * time.Minute, // 静态数据：30分钟
+	LongTerm:  2 * time.Hour,    // 长期数据：2小时
 }
 
 // CacheType 缓存类型
 type CacheType int
 
 const (
-	CacheTypeRealTime CacheType = iota // 实时数据（市场数据、最新持仓等）
-	CacheTypeAggregate                 // 聚合数据（资金流、统计等）
-	CacheTypeStatic                    // 静态数据（实体列表、黑名单等）
-	CacheTypeLongTerm                  // 长期数据（历史数据、归档数据等）
+	CacheTypeRealTime  CacheType = iota // 实时数据（市场数据、最新持仓等）
+	CacheTypeAggregate                  // 聚合数据（资金流、统计等）
+	CacheTypeStatic                     // 静态数据（实体列表、黑名单等）
+	CacheTypeLongTerm                   // 长期数据（历史数据、归档数据等）
 )
 
 // GetTTL 根据缓存类型获取 TTL
@@ -60,7 +60,7 @@ func (ttl *CacheTTL) GetTTL(cacheType CacheType) time.Duration {
 
 // CacheKeyBuilder 缓存键构建器
 type CacheKeyBuilder struct {
-	prefix string
+	prefix  string
 	version string
 }
 
@@ -107,13 +107,13 @@ func (b *CacheKeyBuilder) BuildPattern(cacheType string, keyParts ...string) str
 
 // CacheStats 缓存统计
 type CacheStats struct {
-	Hits       int64         // 命中次数
-	Misses     int64         // 未命中次数
-	Sets       int64         // 设置次数
-	Deletes    int64         // 删除次数
-	Errors     int64         // 错误次数
-	HitRate    float64       // 命中率
-	LastReset  time.Time     // 上次重置时间
+	Hits      int64     // 命中次数
+	Misses    int64     // 未命中次数
+	Sets      int64     // 设置次数
+	Deletes   int64     // 删除次数
+	Errors    int64     // 错误次数
+	HitRate   float64   // 命中率
+	LastReset time.Time // 上次重置时间
 }
 
 // CacheStatsCollector 缓存统计收集器
@@ -130,7 +130,7 @@ var globalStatsCollector = &CacheStatsCollector{
 func (c *CacheStatsCollector) RecordHit(keyPrefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	stats := c.getOrCreateStats(keyPrefix)
 	stats.Hits++
 	c.updateHitRate(stats)
@@ -140,7 +140,7 @@ func (c *CacheStatsCollector) RecordHit(keyPrefix string) {
 func (c *CacheStatsCollector) RecordMiss(keyPrefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	stats := c.getOrCreateStats(keyPrefix)
 	stats.Misses++
 	c.updateHitRate(stats)
@@ -150,7 +150,7 @@ func (c *CacheStatsCollector) RecordMiss(keyPrefix string) {
 func (c *CacheStatsCollector) RecordSet(keyPrefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	stats := c.getOrCreateStats(keyPrefix)
 	stats.Sets++
 }
@@ -159,7 +159,7 @@ func (c *CacheStatsCollector) RecordSet(keyPrefix string) {
 func (c *CacheStatsCollector) RecordDelete(keyPrefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	stats := c.getOrCreateStats(keyPrefix)
 	stats.Deletes++
 }
@@ -168,16 +168,16 @@ func (c *CacheStatsCollector) RecordDelete(keyPrefix string) {
 func (c *CacheStatsCollector) RecordError(keyPrefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	stats := c.getOrCreateStats(keyPrefix)
 	stats.Errors++
 }
 
 // GetStats 获取统计信息
 func (c *CacheStatsCollector) GetStats(keyPrefix string) *CacheStats {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	stats := c.getOrCreateStats(keyPrefix)
 	// 返回副本，避免并发修改
 	return &CacheStats{
@@ -195,7 +195,7 @@ func (c *CacheStatsCollector) GetStats(keyPrefix string) *CacheStats {
 func (c *CacheStatsCollector) GetAllStats() map[string]*CacheStats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	result := make(map[string]*CacheStats)
 	for k, v := range c.stats {
 		result[k] = &CacheStats{
@@ -215,7 +215,7 @@ func (c *CacheStatsCollector) GetAllStats() map[string]*CacheStats {
 func (c *CacheStatsCollector) ResetStats(keyPrefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	if stats, ok := c.stats[keyPrefix]; ok {
 		stats.Hits = 0
 		stats.Misses = 0
@@ -254,4 +254,3 @@ func GetCacheStats(keyPrefix string) *CacheStats {
 func GetAllCacheStats() map[string]*CacheStats {
 	return globalStatsCollector.GetAllStats()
 }
-

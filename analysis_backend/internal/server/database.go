@@ -1,9 +1,12 @@
 package server
 
 import (
+	"encoding/json"
+	"log"
 	"time"
 
 	pdb "analysis/internal/db"
+
 	"gorm.io/gorm"
 )
 
@@ -33,6 +36,25 @@ type Database interface {
 	// 转账相关操作
 	GetTransferStats(params TransferStatsParams) (map[string]interface{}, error)
 
+	// Arkham watch 相关
+	ListArkhamWatches() ([]pdb.ArkhamWatch, error)
+	GetArkhamWatchByAddress(address string) (*pdb.ArkhamWatch, error)
+	CreateOrUpdateArkhamWatch(watch *pdb.ArkhamWatch) error
+	UpdateArkhamWatchSnapshot(address, balance string, events json.RawMessage, metadata json.RawMessage, lastActive, snapshot time.Time) error
+	DeleteArkhamWatchByAddress(address string) error
+
+	// Nansen watch 相关
+	ListNansenWatches() ([]pdb.NansenWhaleWatch, error)
+	GetNansenWatchByAddress(address string) (*pdb.NansenWhaleWatch, error)
+	CreateOrUpdateNansenWatch(watch *pdb.NansenWhaleWatch) error
+	DeleteNansenWatchByAddress(address string) error
+
+	// 大户监控相关
+	ListWhaleWatches() ([]pdb.WhaleWatch, error)
+	GetWhaleWatchByAddress(address string) (*pdb.WhaleWatch, error)
+	CreateWhaleWatch(watch *pdb.WhaleWatch) error
+	DeleteWhaleWatchByAddress(address string) error
+
 	// 市场数据相关操作
 	GetBinanceBlacklist(kind string) ([]string, error)
 	AddBinanceBlacklist(kind, symbol string) error
@@ -51,6 +73,17 @@ type Database interface {
 	ListScheduledOrders(userID uint, params PaginationParams) ([]pdb.ScheduledOrder, int64, error)
 	GetScheduledOrderByID(id uint) (*pdb.ScheduledOrder, error)
 	UpdateScheduledOrder(order *pdb.ScheduledOrder) error
+	DeleteScheduledOrder(userID, orderID uint) error
+
+	// 交易策略相关操作
+	CreateTradingStrategy(strategy *pdb.TradingStrategy) error
+	UpdateTradingStrategy(strategy *pdb.TradingStrategy) error
+	DeleteTradingStrategy(userID, strategyID uint) error
+	GetTradingStrategy(userID, strategyID uint) (*pdb.TradingStrategy, error)
+	ListTradingStrategies(userID uint) ([]pdb.TradingStrategy, error)
+
+	// 策略执行相关操作
+	DeleteStrategyExecution(userID, executionID uint) error
 }
 
 // PortfolioSnapshotQueryParams 投资组合快照查询参数
@@ -192,7 +225,7 @@ func (g *gormDatabase) ListPortfolioSnapshots(params PortfolioSnapshotQueryParam
 	if params.EndDate != "" {
 		if t, err := time.Parse("2006-01-02", params.EndDate); err == nil {
 			// 结束日期包含当天，所以加一天并减1秒
-			endTime := t.UTC().Add(24*time.Hour).Add(-time.Second)
+			endTime := t.UTC().Add(24 * time.Hour).Add(-time.Second)
 			q = q.Where("created_at <= ?", endTime)
 		}
 	}
@@ -235,7 +268,7 @@ func (g *gormDatabase) GetHoldingsByRunID(runID, entity string) ([]pdb.Holding, 
 func (g *gormDatabase) GetDailyFlows(params FlowQueryParams) ([]pdb.DailyFlow, error) {
 	optimizer := pdb.NewQueryOptimizer(g.db)
 	q := optimizer.OptimizeFlowQuery(params.Entity, params.Coins, params.Start, params.End, params.Latest, params.RunID)
-	
+
 	var rows []pdb.DailyFlow
 	if err := q.Order("coin asc, day asc").Find(&rows).Error; err != nil {
 		return nil, err
@@ -252,7 +285,7 @@ func (g *gormDatabase) GetWeeklyFlows(params FlowQueryParams) ([]pdb.WeeklyFlow,
 	if len(params.Coins) > 0 {
 		q = q.Where("coin IN ?", params.Coins)
 	}
-	
+
 	var rows []pdb.WeeklyFlow
 	if err := q.Order("coin asc, week asc").Find(&rows).Error; err != nil {
 		return nil, err
@@ -263,6 +296,58 @@ func (g *gormDatabase) GetWeeklyFlows(params FlowQueryParams) ([]pdb.WeeklyFlow,
 // GetTransferStats 获取转账统计
 func (g *gormDatabase) GetTransferStats(params TransferStatsParams) (map[string]interface{}, error) {
 	return pdb.GetTransferStats(g.db, params.Entity, params.Chain, params.Coin, params.Start, params.End)
+}
+
+func (g *gormDatabase) ListArkhamWatches() ([]pdb.ArkhamWatch, error) {
+	return pdb.ListArkhamWatches(g.db)
+}
+
+func (g *gormDatabase) GetArkhamWatchByAddress(address string) (*pdb.ArkhamWatch, error) {
+	return pdb.GetArkhamWatchByAddress(g.db, address)
+}
+
+func (g *gormDatabase) CreateOrUpdateArkhamWatch(watch *pdb.ArkhamWatch) error {
+	return pdb.CreateOrUpdateArkhamWatch(g.db, watch)
+}
+
+func (g *gormDatabase) UpdateArkhamWatchSnapshot(address, balance string, events json.RawMessage, metadata json.RawMessage, lastActive, snapshot time.Time) error {
+	return pdb.UpdateArkhamWatchSnapshot(g.db, address, balance, events, metadata, lastActive, snapshot)
+}
+
+func (g *gormDatabase) DeleteArkhamWatchByAddress(address string) error {
+	return pdb.DeleteArkhamWatchByAddress(g.db, address)
+}
+
+func (g *gormDatabase) ListNansenWatches() ([]pdb.NansenWhaleWatch, error) {
+	return pdb.ListNansenWatches(g.db)
+}
+
+func (g *gormDatabase) GetNansenWatchByAddress(address string) (*pdb.NansenWhaleWatch, error) {
+	return pdb.GetNansenWatchByAddress(g.db, address)
+}
+
+func (g *gormDatabase) CreateOrUpdateNansenWatch(watch *pdb.NansenWhaleWatch) error {
+	return pdb.CreateOrUpdateNansenWatch(g.db, watch)
+}
+
+func (g *gormDatabase) DeleteNansenWatchByAddress(address string) error {
+	return pdb.DeleteNansenWatchByAddress(g.db, address)
+}
+
+func (g *gormDatabase) ListWhaleWatches() ([]pdb.WhaleWatch, error) {
+	return pdb.ListWhaleWatches(g.db)
+}
+
+func (g *gormDatabase) GetWhaleWatchByAddress(address string) (*pdb.WhaleWatch, error) {
+	return pdb.GetWhaleWatchByAddress(g.db, address)
+}
+
+func (g *gormDatabase) CreateWhaleWatch(watch *pdb.WhaleWatch) error {
+	return pdb.CreateWhaleWatch(g.db, watch)
+}
+
+func (g *gormDatabase) DeleteWhaleWatchByAddress(address string) error {
+	return pdb.DeleteWhaleWatchByAddress(g.db, address)
 }
 
 // GetBinanceBlacklist 获取币安黑名单
@@ -290,7 +375,7 @@ func (g *gormDatabase) ListAnnouncements(params AnnouncementQueryParams) ([]pdb.
 	// 这里需要调用 pdb 中的函数，或者直接实现
 	// 为了简化，先返回一个基本实现
 	baseQuery := g.db.Model(&pdb.Announcement{})
-	
+
 	// 应用过滤条件
 	if len(params.Sources) > 0 {
 		baseQuery = baseQuery.Where("source IN ?", params.Sources)
@@ -323,7 +408,7 @@ func (g *gormDatabase) ListAnnouncements(params AnnouncementQueryParams) ([]pdb.
 	if params.EndDate != "" {
 		if t, err := time.Parse("2006-01-02", params.EndDate); err == nil {
 			// 结束日期包含当天，所以加一天并减1秒
-			endTime := t.UTC().Add(24*time.Hour).Add(-time.Second)
+			endTime := t.UTC().Add(24 * time.Hour).Add(-time.Second)
 			baseQuery = baseQuery.Where("release_time <= ?", endTime)
 		}
 	}
@@ -383,7 +468,7 @@ func (g *gormDatabase) ListTwitterPosts(params TwitterPostQueryParams) ([]pdb.Tw
 	if params.EndDate != "" {
 		if t, err := time.Parse("2006-01-02", params.EndDate); err == nil {
 			// 结束日期包含当天，所以加一天并减1秒
-			endTime := t.UTC().Add(24*time.Hour).Add(-time.Second)
+			endTime := t.UTC().Add(24 * time.Hour).Add(-time.Second)
 			q = q.Where("tweet_time <= ?", endTime)
 		}
 	}
@@ -423,6 +508,9 @@ func (g *gormDatabase) ListScheduledOrders(userID uint, params PaginationParams)
 		return nil, 0, err
 	}
 
+	log.Printf("[Order-DB] ListScheduledOrders: user_id=%d, total=%d, page=%d, page_size=%d, offset=%d",
+		userID, total, params.Page, params.PageSize, params.Offset)
+
 	// 优化：只查询需要的字段，减少数据传输
 	var orders []pdb.ScheduledOrder
 	dataQuery := q.Order("trigger_time DESC").
@@ -432,6 +520,7 @@ func (g *gormDatabase) ListScheduledOrders(userID uint, params PaginationParams)
 		return nil, 0, err
 	}
 
+	log.Printf("[Order-DB] Found %d orders for page %d", len(orders), params.Page)
 	return orders, total, nil
 }
 
@@ -449,3 +538,37 @@ func (g *gormDatabase) UpdateScheduledOrder(order *pdb.ScheduledOrder) error {
 	return g.db.Save(order).Error
 }
 
+// DeleteScheduledOrder 删除定时订单
+func (g *gormDatabase) DeleteScheduledOrder(userID, orderID uint) error {
+	return g.db.Where("user_id = ? AND id = ?", userID, orderID).Delete(&pdb.ScheduledOrder{}).Error
+}
+
+// CreateTradingStrategy 创建策略
+func (g *gormDatabase) CreateTradingStrategy(strategy *pdb.TradingStrategy) error {
+	return pdb.CreateTradingStrategy(g.db, strategy)
+}
+
+// UpdateTradingStrategy 更新策略
+func (g *gormDatabase) UpdateTradingStrategy(strategy *pdb.TradingStrategy) error {
+	return pdb.UpdateTradingStrategy(g.db, strategy)
+}
+
+// DeleteTradingStrategy 删除策略
+func (g *gormDatabase) DeleteTradingStrategy(userID, strategyID uint) error {
+	return pdb.DeleteTradingStrategy(g.db, userID, strategyID)
+}
+
+// GetTradingStrategy 获取单个策略
+func (g *gormDatabase) GetTradingStrategy(userID, strategyID uint) (*pdb.TradingStrategy, error) {
+	return pdb.GetTradingStrategy(g.db, userID, strategyID)
+}
+
+// ListTradingStrategies 获取策略列表
+func (g *gormDatabase) ListTradingStrategies(userID uint) ([]pdb.TradingStrategy, error) {
+	return pdb.ListTradingStrategies(g.db, userID)
+}
+
+// DeleteStrategyExecution 删除策略执行记录
+func (g *gormDatabase) DeleteStrategyExecution(userID, executionID uint) error {
+	return pdb.DeleteStrategyExecution(g.db, userID, executionID)
+}

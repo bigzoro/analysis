@@ -14,7 +14,7 @@ import (
 // APIError 统一的 API 错误响应格式（优化：使用错误码）
 type APIError struct {
 	Code     string `json:"code"`               // 错误码
-	Message  string `json:"message"`           // 用户友好的错误消息
+	Message  string `json:"message"`            // 用户友好的错误消息
 	Details  string `json:"details,omitempty"`  // 详细错误信息（仅开发环境）
 	TraceID  string `json:"trace_id,omitempty"` // 追踪 ID（用于日志关联）
 	HTTPCode int    `json:"-"`                  // HTTP 状态码（不序列化）
@@ -24,7 +24,7 @@ type APIError struct {
 func (s *Server) ErrorResponse(c *gin.Context, statusCode int, message string, err error) {
 	// 生成追踪ID
 	traceID := generateTraceID(c)
-	
+
 	// 如果 err 是 AppError，使用其信息
 	var appErr *AppError
 	if err != nil {
@@ -249,4 +249,3 @@ func (s *Server) DatabaseError(c *gin.Context, operation string, err error) {
 	appErr := WrapDatabaseError(err, operation)
 	s.ErrorResponse(c, http.StatusInternalServerError, appErr.Message, appErr)
 }
-

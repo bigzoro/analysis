@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>策略筛选逻辑优化演示</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-light: #dbeafe;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #e5e7eb;
+            --border-light: #f3f4f6;
+            --radius-md: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            color: #111827;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin: 0 0 24px 0;
+            font-size: 14px;
+        }
+
+        .demo-section {
+            margin-bottom: 32px;
+        }
+
+        .demo-section h3 {
+            margin: 0 0 16px 0;
+            color: #111827;
+            font-size: 18px;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary-color);
+        }
+
+        .strategy-item {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .strategy-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .strategy-item.strategy-top-item {
+            border-left: 4px solid var(--primary-color);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(29, 78, 216, 0.05));
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .strategy-item.strategy-top-item .strategy-name {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .strategy-summary {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-primary);
+            cursor: pointer;
+        }
+
+        .strategy-main-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .strategy-quick-metrics {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .metric {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .metric.score {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .metric.confidence {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .strategy-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-badge.status-exists {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .status-badge.status-new {
+            background: var(--warning-light);
+            color: var(--warning-color);
+        }
+
+        .strategy-details {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-light);
+            display: none;
+        }
+
+        .strategy-item.expanded .strategy-details {
+            display: block;
+        }
+
+        .strategy-reason {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .logic-explanation {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .logic-explanation h4 {
+            margin: 0 0 12px 0;
+            color: #111827;
+        }
+
+        .logic-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .logic-step {
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+        }
+
+        .logic-step h5 {
+            margin: 0 0 8px 0;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .logic-step p {
+            margin: 0;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .example-scenarios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .scenario {
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .scenario.correct {
+            background: var(--success-light);
+            border-color: var(--success-color);
+        }
+
+        .scenario.incorrect {
+            background: var(--danger-light);
+            border-color: var(--danger-color);
+        }
+
+        .scenario h5 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+
+        .scenario p {
+            margin: 0;
+            font-size: 13px;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 策略筛选逻辑优化演示</h1>
+        <div class="subtitle">第一名策略现在和其他策略一样，根据筛选条件智能显示</div>
+
+        <div class="demo-section">
+            <h3>🔍 筛选逻辑优化</h3>
+            <div class="logic-explanation">
+                <h4>优化后的筛选逻辑</h4>
+                <div class="logic-steps">
+                    <div class="logic-step">
+                        <h5>1. 第一名独立判断</h5>
+                        <p>第一名策略单独判断是否满足当前筛选条件</p>
+                    </div>
+                    <div class="logic-step">
+                        <h5>2. 其他策略筛选</h5>
+                        <p>filteredStrategies 只处理除第一名外的其他策略</p>
+                    </div>
+                    <div class="logic-step">
+                        <h5>3. 去重处理</h5>
+                        <p>如果第一名已显示，从其他策略列表中移除避免重复</p>
+                    </div>
+                    <div class="logic-step">
+                        <h5>4. 统一显示</h5>
+                        <p>第一名和其他策略使用相同的显示逻辑</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-controls">
+                <button class="filter-btn active" onclick="setFilter('top3')">前3名</button>
+                <button class="filter-btn" onclick="setFilter('high_score')">高评分(>7分)</button>
+                <button class="filter-btn" onclick="setFilter('low_risk')">低风险</button>
+                <button class="filter-btn" onclick="setFilter('all')">全部策略</button>
+            </div>
+
+            <div id="strategyList">
+                <!-- 策略列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>📋 示例场景分析</h3>
+            <div class="example-scenarios">
+                <div class="scenario correct">
+                    <h5>✅ 正确的行为</h5>
+                    <p><strong>场景：</strong>网格交易策略(评分10，低风险)，用户选择"低风险"筛选</p>
+                    <p><strong>结果：</strong>第一名显示，其他低风险策略也显示，无重复</p>
+                </div>
+                <div class="scenario incorrect">
+                    <h5>❌ 错误的行为</h5>
+                    <p><strong>场景：</strong>网格交易策略(评分10，低风险)，用户选择"高评分"筛选</p>
+                    <p><strong>结果：</strong>第一名应该显示，因为评分10>7</p>
+                </div>
+                <div class="scenario correct">
+                    <h5>✅ 正确的行为</h5>
+                    <p><strong>场景：</strong>网格交易策略(评分6，中风险)，用户选择"高评分"筛选</p>
+                    <p><strong>结果：</strong>第一名不显示，只显示评分>=7的其他策略</p>
+                </div>
+                <div class="scenario correct">
+                    <h5>✅ 正确的行为</h5>
+                    <p><strong>场景：</strong>用户选择"全部策略"</p>
+                    <p><strong>结果：</strong>第一名显示，其他所有策略显示</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟策略数据
+        const mockStrategies = [
+            {
+                type: 'grid_trading',
+                name: '网格交易策略',
+                score: 10,
+                confidence: 80,
+                risk_level: 'low',
+                exists: true
+            },
+            {
+                type: 'breakthrough',
+                name: '突破策略',
+                score: 7,
+                confidence: 45,
+                risk_level: 'high',
+                exists: false
+            },
+            {
+                type: 'mean_reversion',
+                name: '均值回归策略',
+                score: 6,
+                confidence: 50,
+                risk_level: 'medium',
+                exists: true
+            },
+            {
+                type: 'rsi',
+                name: 'RSI策略',
+                score: 8,
+                confidence: 55,
+                risk_level: 'low',
+                exists: false
+            },
+            {
+                type: 'macd',
+                name: 'MACD策略',
+                score: 5,
+                confidence: 40,
+                risk_level: 'medium',
+                exists: false
+            }
+        ];
+
+        let currentFilter = 'top3';
+        let expandedStrategies = [];
+
+        // 判断第一名是否应该显示
+        function shouldShowTopStrategy(filter) {
+            const topStrategy = mockStrategies[0]; // 第一名是网格交易策略
+
+            switch (filter) {
+                case 'top3':
+                    return true;
+                case 'high_score':
+                    return topStrategy.score >= 7;
+                case 'low_risk':
+                    return topStrategy.risk_level === 'low';
+                case 'all':
+                default:
+                    return true;
+            }
+        }
+
+        // 获取筛选后的策略列表（不包含第一名）
+        function getFilteredStrategies(filter) {
+            let filtered = [];
+
+            switch (filter) {
+                case 'top3':
+                    filtered = mockStrategies.slice(0, 3);
+                    break;
+                case 'high_score':
+                    filtered = mockStrategies.filter(s => s.score >= 7);
+                    break;
+                case 'low_risk':
+                    filtered = mockStrategies.filter(s => s.risk_level === 'low');
+                    break;
+                case 'all':
+                default:
+                    filtered = mockStrategies;
+                    break;
+            }
+
+            // 如果第一名已经单独显示，则从列表中移除第一名，避免重复显示
+            if (shouldShowTopStrategy(filter)) {
+                filtered = filtered.filter(s => s.type !== mockStrategies[0].type);
+            }
+
+            return filtered;
+        }
+
+        // 设置筛选器
+        function setFilter(filter) {
+            currentFilter = filter;
+
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            renderStrategies();
+        }
+
+        // 切换展开状态
+        function toggleExpand(strategyType) {
+            const index = expandedStrategies.indexOf(strategyType);
+            if (index > -1) {
+                expandedStrategies.splice(index, 1);
+            } else {
+                expandedStrategies.push(strategyType);
+            }
+            renderStrategies();
+        }
+
+        // 渲染策略列表
+        function renderStrategies() {
+            const container = document.getElementById('strategyList');
+            container.innerHTML = '';
+
+            const showTop = shouldShowTopStrategy(currentFilter);
+            const filteredStrategies = getFilteredStrategies(currentFilter);
+
+            // 显示第一名（如果满足条件）
+            if (showTop) {
+                const topStrategy = mockStrategies[0];
+                const isExpanded = expandedStrategies.includes(topStrategy.type);
+
+                const topHtml = `
+                    <div class="strategy-item strategy-top-item ${isExpanded ? 'expanded' : ''}">
+                        <div class="strategy-summary" onclick="toggleExpand('${topStrategy.type}')">
+                            <div class="strategy-main-info">
+                                <span class="strategy-name">👑 ${topStrategy.name}</span>
+                                <div class="strategy-quick-metrics">
+                                    <span class="metric score">${topStrategy.score}/10</span>
+                                    <span class="metric confidence">${topStrategy.confidence}%</span>
+                                    <span class="metric risk" style="background: rgba(16, 185, 129, 0.2); color: #059669;">🛡️</span>
+                                </div>
+                            </div>
+                            <div class="strategy-status">
+                                <span class="status-badge ${topStrategy.exists ? 'status-exists' : 'status-new'}">
+                                    ${topStrategy.exists ? '已配置' : '新策略'}
+                                </span>
+                                <span>▶</span>
+                            </div>
+                        </div>
+                        <div class="strategy-details">
+                            <div class="strategy-reason">第一名策略的详细信息...</div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += topHtml;
+            }
+
+            // 显示其他筛选后的策略
+            filteredStrategies.forEach(strategy => {
+                const isExpanded = expandedStrategies.includes(strategy.type);
+
+                const strategyHtml = `
+                    <div class="strategy-item ${isExpanded ? 'expanded' : ''}">
+                        <div class="strategy-summary" onclick="toggleExpand('${strategy.type}')">
+                            <div class="strategy-main-info">
+                                <span class="strategy-name">${strategy.name}</span>
+                                <div class="strategy-quick-metrics">
+                                    <span class="metric score">${strategy.score}/10</span>
+                                    <span class="metric confidence">${strategy.confidence}%</span>
+                                    <span class="metric risk" style="background: rgba(239, 68, 68, 0.2); color: #dc2626;">⚠️</span>
+                                </div>
+                            </div>
+                            <div class="strategy-status">
+                                <span class="status-badge ${strategy.exists ? 'status-exists' : 'status-new'}">
+                                    ${strategy.exists ? '已配置' : '新策略'}
+                                </span>
+                                <span>▶</span>
+                            </div>
+                        </div>
+                        <div class="strategy-details">
+                            <div class="strategy-reason">${strategy.name}的详细信息...</div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += strategyHtml;
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderStrategies();
+        });
+    </script>
+</body>
+</html>

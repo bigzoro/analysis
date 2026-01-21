@@ -235,14 +235,14 @@ func (s *Server) ListAnnouncements(c *gin.Context) {
 	// 分页参数（兼容旧格式 limit 和 offset）
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("page_size")
-	
+
 	// 兼容旧格式 limit
 	if pageSizeStr == "" {
 		if v := strings.TrimSpace(c.Query("limit")); v != "" {
 			pageSizeStr = v
 		}
 	}
-	
+
 	// 兼容旧格式 offset
 	if pageStr == "" {
 		if v := strings.TrimSpace(c.Query("offset")); v != "" {
@@ -258,7 +258,7 @@ func (s *Server) ListAnnouncements(c *gin.Context) {
 			}
 		}
 	}
-	
+
 	pagination := ParsePaginationParams(
 		pageStr,
 		pageSizeStr,
@@ -316,7 +316,7 @@ func (s *Server) ListAnnouncements(c *gin.Context) {
 	if endDate != "" {
 		if t, err := time.Parse("2006-01-02", endDate); err == nil {
 			// 结束日期包含当天，所以加一天并减1秒
-			endTime := t.UTC().Add(24*time.Hour).Add(-time.Second)
+			endTime := t.UTC().Add(24 * time.Hour).Add(-time.Second)
 			baseQuery = baseQuery.Where("release_time <= ?", endTime)
 		}
 	}

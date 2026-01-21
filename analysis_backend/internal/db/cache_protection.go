@@ -15,11 +15,11 @@ type CacheProtection struct {
 	// 防止缓存穿透：对于不存在的键，也缓存一个空值
 	PreventPenetration bool
 	EmptyValueTTL      time.Duration // 空值缓存时间（通常较短）
-	
+
 	// 防止缓存击穿：使用互斥锁保护热点数据
 	PreventBreakdown bool
 	LockTimeout      time.Duration // 锁超时时间
-	
+
 	// 防止缓存雪崩：随机化 TTL
 	PreventAvalanche bool
 	TTLRandomFactor  float64 // TTL 随机因子（0.1 表示 ±10%）
@@ -37,10 +37,10 @@ var DefaultCacheProtection = CacheProtection{
 
 // ProtectedCache 带保护的缓存包装器
 type ProtectedCache struct {
-	cache     CacheInterface
+	cache      CacheInterface
 	protection CacheProtection
-	locks     map[string]*sync.Mutex
-	mu        sync.RWMutex
+	locks      map[string]*sync.Mutex
+	mu         sync.RWMutex
 }
 
 // NewProtectedCache 创建带保护的缓存
@@ -64,7 +64,7 @@ func (p *ProtectedCache) Get(ctx context.Context, key string) ([]byte, error) {
 		}
 		return data, nil
 	}
-	
+
 	// 缓存未命中
 	if p.protection.PreventPenetration {
 		// 检查是否有空值标记
@@ -75,7 +75,7 @@ func (p *ProtectedCache) Get(ctx context.Context, key string) ([]byte, error) {
 			return nil, fmt.Errorf("key not found")
 		}
 	}
-	
+
 	return nil, err
 }
 
@@ -85,7 +85,7 @@ func (p *ProtectedCache) Set(ctx context.Context, key string, value []byte, ttl 
 	if p.protection.PreventAvalanche {
 		ttl = p.randomizeTTL(ttl)
 	}
-	
+
 	return p.cache.Set(ctx, key, value, ttl)
 }
 
@@ -94,7 +94,7 @@ func (p *ProtectedCache) SetEmpty(ctx context.Context, key string) error {
 	if !p.protection.PreventPenetration {
 		return nil
 	}
-	
+
 	emptyKey := p.getEmptyKey(key)
 	emptyValue := []byte{0} // 空值标记
 	return p.cache.Set(ctx, emptyKey, emptyValue, p.protection.EmptyValueTTL)
@@ -107,39 +107,39 @@ func (p *ProtectedCache) GetWithLock(ctx context.Context, key string, loader fun
 	if err == nil {
 		return data, nil
 	}
-	
+
 	if !p.protection.PreventBreakdown {
 		// 不使用锁保护，直接加载
 		return p.loadAndSet(ctx, key, loader)
 	}
-	
+
 	// 获取或创建锁
 	lock := p.getLock(key)
-	
+
 	// 尝试获取锁（带超时）
 	lockAcquired := make(chan bool, 1)
 	go func() {
 		lock.Lock()
 		lockAcquired <- true
 	}()
-	
+
 	select {
 	case <-lockAcquired:
 		defer lock.Unlock()
-		
+
 		// 再次检查缓存（双重检查）
 		data, err := p.Get(ctx, key)
 		if err == nil {
 			return data, nil
 		}
-		
+
 		// 加载数据
 		return p.loadAndSet(ctx, key, loader)
-		
+
 	case <-time.After(p.protection.LockTimeout):
 		// 锁超时，直接加载（可能重复加载，但避免死锁）
 		return p.loadAndSet(ctx, key, loader)
-		
+
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
@@ -153,19 +153,19 @@ func (p *ProtectedCache) loadAndSet(ctx context.Context, key string, loader func
 		_ = p.SetEmpty(ctx, key)
 		return nil, err
 	}
-	
+
 	if len(data) == 0 {
 		// 数据为空，设置空值标记
 		_ = p.SetEmpty(ctx, key)
 		return nil, fmt.Errorf("key not found")
 	}
-	
+
 	// 设置缓存
 	if setErr := p.Set(ctx, key, data, ttl); setErr != nil {
 		// 设置缓存失败不影响返回数据
 		// 可以记录日志
 	}
-	
+
 	return data, nil
 }
 
@@ -192,19 +192,19 @@ func (p *ProtectedCache) getLock(key string) *sync.Mutex {
 	p.mu.RLock()
 	lock, ok := p.locks[key]
 	p.mu.RUnlock()
-	
+
 	if ok {
 		return lock
 	}
-	
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	// 双重检查
 	if lock, ok := p.locks[key]; ok {
 		return lock
 	}
-	
+
 	lock = &sync.Mutex{}
 	p.locks[key] = lock
 	return lock
@@ -215,9 +215,8 @@ func (p *ProtectedCache) randomizeTTL(baseTTL time.Duration) time.Duration {
 	if p.protection.TTLRandomFactor <= 0 {
 		return baseTTL
 	}
-	
+
 	// 生成 -factor 到 +factor 之间的随机因子
 	factor := 1.0 + (rand.Float64()*2.0-1.0)*p.protection.TTLRandomFactor
 	return time.Duration(float64(baseTTL) * factor)
 }
-

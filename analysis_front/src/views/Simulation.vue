@@ -52,7 +52,13 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="trade in openTrades" :key="trade.id">
+        <tr
+          v-for="trade in openTrades"
+          :key="trade.id"
+          class="trade-row"
+          :class="{ 'selected-row': (trade.base_symbol || trade.symbol || '').toUpperCase() === chartSymbolSelection }"
+          @click="selectTrade(trade)"
+        >
           <td><strong>{{ trade.base_symbol }}</strong><br><small>{{ trade.symbol }}</small></td>
           <td>{{ formatQuantity(trade.quantity) }}</td>
           <td>{{ formatPrice(trade.price) }}</td>
@@ -65,11 +71,69 @@
             {{ formatPercent(trade.unrealized_pnl_percent) }}
           </td>
           <td>
-            <button class="btn-small danger" @click="showCloseModal(trade)">平仓</button>
+            <button class="btn-small danger" @click.stop="showCloseModal(trade)">平仓</button>
           </td>
         </tr>
       </tbody>
     </table>
+  </section>
+
+  <!-- K线图 -->
+  <section style="margin-top:12px;" class="panel">
+    <div class="row" style="align-items:flex-end; gap:12px;">
+      <h3>K线图</h3>
+      <div class="spacer"></div>
+      <label style="margin-bottom:0;">
+        币种：
+        <input
+          v-model="chartSymbolSelection"
+          :list="'symbol-options'"
+          placeholder="输入或选择币种"
+          @input="onSymbolInput"
+        />
+        <datalist id="symbol-options">
+          <option v-for="symbol in availableSymbols" :key="symbol" :value="symbol" />
+        </datalist>
+      </label>
+      <label style="margin-bottom:0;">
+        时间周期：
+        <select v-model="klineInterval">
+          <option value="hourly">小时线</option>
+          <option value="daily">日线</option>
+        </select>
+      </label>
+      <label style="margin-bottom:0;">
+        区间：
+        <select v-model.number="klineDays">
+          <option :value="7">7天</option>
+          <option :value="30">30天</option>
+          <option :value="90">90天</option>
+          <option :value="180">180天</option>
+        </select>
+      </label>
+      <label style="margin-bottom:0;">
+        <input type="checkbox" v-model="showVolume" />
+        显示成交量
+      </label>
+    </div>
+    <div v-if="klineLoading" class="chart-placeholder">
+      <p>加载中...</p>
+    </div>
+    <div v-else-if="chartErrorMessage" class="chart-error">
+      {{ chartErrorMessage }}
+    </div>
+    <CandlestickChart
+      v-else-if="klineData.length > 0"
+      :kline-data="klineData"
+      :buy-points="buyPoints"
+      :sell-points="sellPoints"
+      :title="chartTitle"
+      :show-volume="showVolume"
+      :volume-data="volumeData"
+    />
+    <div v-else class="chart-placeholder">
+      <p>{{ chartPlaceholder }}</p>
+    </div>
   </section>
 
   <!-- 历史交易 -->
@@ -178,8 +242,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { api } from '../api/api.js'
+import CandlestickChart from '../components/CandlestickChart.vue'
 
 const loading = ref(false)
 const showCreateModal = ref(false)
@@ -223,10 +288,137 @@ const totalReturnPercent = computed(() => {
   return (totalUnrealizedPnl.value / totalInvested.value) * 100
 })
 
+const klineDays = ref(30)
+const klineInterval = ref('daily')
+const chartSymbolSelection = ref('')
+const klineData = ref([])
+const volumeData = ref([])
+const klineLoading = ref(false)
+const chartErrorMessage = ref('')
+const showVolume = ref(false)
+const MIN_SYMBOL_LENGTH = 2
+
+const availableSymbols = computed(() => {
+  const map = new Map()
+  openTrades.value.forEach(trade => {
+    const symbol = (trade.base_symbol || trade.symbol || '').toUpperCase()
+    if (!symbol) return
+    if (!map.has(symbol)) {
+      map.set(symbol, symbol)
+    }
+  })
+  return Array.from(map.values())
+})
+
+const chartTitle = computed(() => {
+  const symbol = chartSymbolSelection.value
+  return symbol ? `${symbol} 价格趋势` : 'K线图'
+})
+
+const chartPlaceholder = computed(() => {
+  return chartSymbolSelection.value ? '当前币种暂无K线数据' : '请选择持仓查看K线'
+})
+
+// 计算买入点和卖出点
+const buyPoints = computed(() => {
+  if (!chartSymbolSelection.value) return []
+  const symbol = chartSymbolSelection.value.toUpperCase()
+  return allTrades.value
+    .filter(trade => {
+      const tradeSymbol = (trade.base_symbol || trade.symbol || '').toUpperCase()
+      return tradeSymbol === symbol && trade.is_open
+    })
+    .map(trade => ({
+      timestamp: new Date(trade.created_at).getTime(),
+      price: parseFloat(trade.price),
+      label: `买入 ${trade.quantity}`
+    }))
+})
+
+const sellPoints = computed(() => {
+  if (!chartSymbolSelection.value) return []
+  const symbol = chartSymbolSelection.value.toUpperCase()
+  return allTrades.value
+    .filter(trade => {
+      const tradeSymbol = (trade.base_symbol || trade.symbol || '').toUpperCase()
+      return tradeSymbol === symbol && !trade.is_open && trade.sold_at
+    })
+    .map(trade => ({
+      timestamp: new Date(trade.sold_at).getTime(),
+      price: parseFloat(trade.current_price || trade.price),
+      label: `卖出 ${trade.quantity}`
+    }))
+})
+
 function formatTime(timeStr) {
   if (!timeStr) return '-'
   const date = new Date(timeStr)
   return date.toLocaleString('zh-CN')
+}
+
+async function loadKlineForSymbol(symbol) {
+  if (!symbol) {
+    klineData.value = []
+    volumeData.value = []
+    chartErrorMessage.value = ''
+    return
+  }
+
+  if (symbol.length < MIN_SYMBOL_LENGTH) {
+    klineData.value = []
+    volumeData.value = []
+    chartErrorMessage.value = `请输入至少 ${MIN_SYMBOL_LENGTH} 个字符再加载`
+    return
+  }
+
+  chartErrorMessage.value = ''
+  klineLoading.value = true
+  try {
+    const res = await api.getMarketPriceHistory({ 
+      symbol, 
+      days: klineDays.value,
+      interval: klineInterval.value 
+    })
+    const prices = Array.isArray(res?.prices) ? res.prices : []
+    const volumes = Array.isArray(res?.total_volumes) ? res.total_volumes : []
+    
+    // 转换价格数据为K线格式 [timestamp, price]
+    klineData.value = prices.map(item => [item[0], item[1]])
+    
+    // 转换成交量数据
+    volumeData.value = volumes.map(item => [item[0], item[1]])
+    
+    if (!prices.length) {
+      chartErrorMessage.value = '找不到历史数据'
+    }
+  } catch (error) {
+    console.error('加载K线失败:', error)
+    chartErrorMessage.value = error?.message || 'K线加载失败，请检查币种是否受支持'
+    klineData.value = []
+    volumeData.value = []
+  } finally {
+    klineLoading.value = false
+  }
+}
+
+async function ensureSelectedTrade(reload = true) {
+  if (openTrades.value.length === 0) {
+    chartSymbolSelection.value = ''
+    klineData.value = []
+    volumeData.value = []
+    return
+  }
+
+  if (!chartSymbolSelection.value || !availableSymbols.value.includes(chartSymbolSelection.value)) {
+    chartSymbolSelection.value = availableSymbols.value[0]
+  }
+}
+
+function selectTrade(trade) {
+  if (!trade) return
+  const symbol = (trade.base_symbol || trade.symbol || '').toUpperCase()
+  if (!symbol) return
+  chartSymbolSelection.value = symbol
 }
 
 function formatPrice(price) {
@@ -271,11 +463,33 @@ function calculateCurrentValue(trade) {
   return price * qty
 }
 
+function onSymbolInput(event) {
+  chartSymbolSelection.value = (event.target?.value || '').toUpperCase()
+}
+
+watch([klineDays, klineInterval], () => {
+  if (chartSymbolSelection.value && chartSymbolSelection.value.length >= MIN_SYMBOL_LENGTH) {
+    loadKlineForSymbol(chartSymbolSelection.value)
+  }
+})
+
+watch(chartSymbolSelection, (symbol) => {
+  if (!symbol) {
+    klineData.value = []
+    volumeData.value = []
+    chartErrorMessage.value = ''
+    return
+  }
+
+  loadKlineForSymbol(symbol)
+})
+
 async function load() {
   loading.value = true
   try {
     const res = await api.getSimulatedTrades({ is_open: null })
     allTrades.value = res.trades || []
+    await ensureSelectedTrade()
   } catch (error) {
     console.error('加载模拟交易失败:', error)
     alert('加载失败: ' + (error.message || '未知错误'))
@@ -451,6 +665,32 @@ onMounted(() => {
 
 .trade-info p {
   margin: 8px 0;
+}
+
+.chart-error {
+  text-align: center;
+  padding: 24px;
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.trade-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.trade-row:hover {
+  background: #f5f7fb;
+}
+
+.selected-row {
+  background: #eef2ff;
+}
+
+.chart-placeholder {
+  text-align: center;
+  padding: 40px;
+  color: #666;
 }
 </style>
 

@@ -325,4 +325,3 @@ func CalculateFlowScoreWithTrend(flow24h, trend3d, trend7d float64) float64 {
 
 	return math.Min(25, totalScore) // 资金流因子最高25分
 }
-

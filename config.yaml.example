@@ -1,0 +1,156 @@
+# 配置文件示例
+# 复制此文件为 config.yaml 并根据需要修改配置
+
+# 代理设置
+proxy:
+  enable: false
+  all_proxy: ""
+  http_proxy: ""
+  https_proxy: ""
+  no_proxy: ""
+
+# 定价服务
+pricing:
+  enable: false
+  coingecko_endpoint: "https://api.coingecko.com/api/v3"
+  map: {}
+
+# CoinCap 配置
+coincap:
+  symbol_to_asset_id: {}
+
+# 数据源配置
+data_sources:
+  newsapi:
+    api_key: ""
+  lunarcrush:
+    api_key: ""
+  coingecko:
+    enabled: true
+  # 注意：Binance Futures相关配置已统一到 exchange.binance 下
+  # 系统会自动使用 exchange.binance 的配置进行数据获取
+
+# 数据库配置
+database:
+  host: "localhost"
+  port: 3306
+  user: "root"
+  password: ""
+  dbname: "analysis"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: "1h"
+
+# Twitter 配置
+twitter:
+  bearer: ""
+  monitor_users: []
+  interval_seconds: 300
+
+# Redis 配置
+redis:
+  enable: false
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+
+# Whale监控配置
+whale_monitoring:
+  arkham:
+    base_url: "https://api.arkhamintelligence.com"
+    api_key: ""
+    api_secret: ""
+    interval_seconds: 300
+  nansen:
+    base_url: "https://api.nansen.ai"
+    api_key: ""
+    api_secret: ""
+    interval_seconds: 300
+
+# 数据质量配置
+data_quality:
+  alert_thresholds:
+    max_freshness_seconds: 3600
+    min_completeness_percent: 95.0
+    max_error_rate_percent: 5.0
+    min_accuracy_percent: 95.0
+  fallback:
+    system:
+      enabled: true
+      health_check_interval: "30s"
+      max_history_size: 1000
+    strategy:
+      candidate_fallback: false
+      scanner_fallback: false
+      data_quality_relax: false
+
+# 通知服务配置
+notification:
+  # 是否启用通知功能，默认关闭以避免不必要的通知
+  enabled: false
+  smtp:
+    server: "smtp.example.com"
+    port: 587
+    username: "your-email@example.com"
+    password: "your-email-password"
+    from_email: "noreply@yourapp.com"
+  sms:
+    api_key: "your-sms-api-key"
+    api_secret: "your-sms-api-secret"
+    sender: "YourApp"
+
+# 交易所配置
+exchange:
+  binance:
+    # ⚠️ 重要：生产环境请使用真实API密钥
+    # 测试环境API密钥可以从 https://testnet.binance.vision 获取
+    # 注意：此配置同时用于交易操作和市场数据获取
+    api_key: "your_binance_api_key_here"
+    secret_key: "your_binance_secret_key_here"
+    # 是否使用测试网络（推荐生产前先在测试网络验证）
+    testnet: true
+
+# 网格交易配置
+grid_trading:
+  # 🔒 安全设置：默认启用模拟模式，确保资金安全
+  # 生产环境部署前请充分测试，然后设为 false
+  simulation_mode: true
+
+  # 💰 交易限制
+  max_single_order_amount: 100.0      # 单笔订单最大金额(USDT)
+  max_daily_trading_volume: 1000.0    # 日最大交易量(USDT)
+
+  # 🛑 紧急控制
+  emergency_stop_enabled: true        # 启用紧急停止功能
+
+  # 🔄 重试机制
+  order_retry_attempts: 3             # 失败订单重试次数
+  order_retry_delay_seconds: 1        # 重试间隔(秒)
+
+  # ⚠️ 风险限制
+  risk_limits:
+    max_drawdown_percent: 20.0        # 最大回撤百分比 (20% = 20%)
+    max_position_size: 50.0           # 最大持仓比例 (50% = 50%)
+    min_order_amount: 10.0            # 最小订单金额 (USDT)
+    max_order_amount: 500.0           # 最大订单金额 (USDT)
+
+  # 📊 性能监控
+  performance_monitoring:
+    enable_metrics: true              # 启用性能指标收集
+    metrics_interval_minutes: 5       # 指标收集间隔(分钟)
+    alert_win_rate_threshold: 0.4     # 胜率告警阈值 (40%)
+
+# 区块链网络配置
+chains:
+  - name: "ethereum"
+    type: "evm"
+    rpc: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY"
+    erc20:
+      - symbol: "USDT"
+        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+      - symbol: "USDC"
+        address: "0xA0b86a33E6441e88C5D5c4a0E5f9F0f6F0b6e6C7"
+
+# 服务配置
+services:
+  enable_data_analysis: true

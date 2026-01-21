@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最佳策略展示优化演示</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-light: #dbeafe;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f9fafb;
+            color: #111827;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            color: #111827;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin: 0 0 24px 0;
+            font-size: 14px;
+        }
+
+        .demo-section {
+            margin-bottom: 32px;
+        }
+
+        .demo-section h3 {
+            margin: 0 0 16px 0;
+            color: #111827;
+            font-size: 18px;
+        }
+
+        /* 优化后的最佳策略横幅样式 */
+        .top-strategy-banner {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #1f2937;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .top-strategy-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .top-strategy-icon {
+            font-size: 28px;
+            opacity: 0.9;
+            flex-shrink: 0;
+        }
+
+        .top-strategy-title {
+            flex: 1;
+        }
+
+        .top-strategy-title h5 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .top-strategy-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .metric {
+            background: rgba(255, 255, 255, 0.2);
+            color: #1f2937;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .risk-level.low {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .top-strategy-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #1f2937;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .top-strategy-content {
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .top-strategy-reason {
+            margin: 0 0 16px 0;
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .top-strategy-performance {
+            margin-bottom: 16px;
+        }
+
+        .performance-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+        }
+
+        .highlight-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .highlight-label {
+            display: block;
+            font-size: 10px;
+            color: #6b7280;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .highlight-value {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .highlight-value.win-rate { color: #10b981; }
+        .highlight-value.sharpe { color: #3b82f6; }
+        .highlight-value.drawdown { color: #ef4444; }
+        .highlight-value.trades { color: #6b7280; }
+
+        .top-strategy-insights {
+            margin-bottom: 16px;
+        }
+
+        .insight-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .insight-text {
+            font-size: 13px;
+            color: #374151;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .insight-text strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .insight-text .positive { color: #10b981; }
+        .insight-text .good { color: #10b981; }
+        .insight-text .poor { color: #ef4444; }
+        .insight-text .confidence-level.high { color: #10b981; }
+
+        .market-fit {
+            margin-top: 12px;
+        }
+
+        .market-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: #1f2937;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .top-strategy-expanded {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .data-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .comparison-item {
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .before {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .after {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .metric-item {
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .metric-name {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        @media (max-width: 768px) {
+            .top-strategy-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .top-strategy-actions {
+                width: 100%;
+                flex-direction: row;
+            }
+
+            .btn-primary, .btn-secondary {
+                flex: 1;
+            }
+
+            .performance-highlights {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .insight-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 最佳策略展示完整数据优化</h1>
+        <div class="subtitle">第一名策略现在展示完整的数据信息，包括性能指标和智能分析</div>
+
+        <div class="demo-section">
+            <h3>📊 数据完整性对比</h3>
+            <div class="data-comparison">
+                <div class="comparison-item before">
+                    <h4>❌ 优化前（数据不全）</h4>
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-name">评分</div>
+                            <div class="metric-value">10/10</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-name">匹配度</div>
+                            <div class="metric-value">80%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-name">风险等级</div>
+                            <div class="metric-value">低</div>
+                        </div>
+                    </div>
+                    <p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">
+                        只有3项基本信息，缺少关键的性能数据和分析洞察
+                    </p>
+                </div>
+                <div class="comparison-item after">
+                    <h4>✅ 优化后（数据完整）</h4>
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-name">胜率</div>
+                            <div class="metric-value" style="color: #10b981;">67.0%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-name">夏普比率</div>
+                            <div class="metric-value" style="color: #3b82f6;">2.20</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-name">最大回撤</div>
+                            <div class="metric-value" style="color: #ef4444;">8.0%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-name">预期收益</div>
+                            <div class="metric-value" style="color: #10b981;">57.6%</div>
+                        </div>
+                    </div>
+                    <p style="margin: 12px 0 0 0; font-size: 13px; color: #374151;">
+                        完整的6项性能指标 + 3项智能分析洞察，为决策提供全面依据
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>🎨 优化后的最佳策略展示</h3>
+
+            <!-- 最佳策略横幅 -->
+            <div class="top-strategy-banner">
+                <div class="top-strategy-header">
+                    <div class="top-strategy-icon">👑</div>
+                    <div class="top-strategy-title">
+                        <h5>网格交易策略</h5>
+                        <div class="top-strategy-badges">
+                            <span class="metric">评分: 10/10</span>
+                            <span class="metric">匹配度: 80%</span>
+                            <span class="metric risk-level low">风险: 低</span>
+                        </div>
+                    </div>
+                    <div class="top-strategy-actions">
+                        <button class="btn-primary">立即配置</button>
+                        <button class="btn-secondary">展开详情</button>
+                    </div>
+                </div>
+
+                <div class="top-strategy-content">
+                    <p class="top-strategy-reason">市场横盘震荡，网格策略可以在价格区间内设置多个买卖点，通过低买高卖获得稳定收益，非常适合当前的震荡行情。</p>
+
+                    <!-- 性能指标 -->
+                    <div class="top-strategy-performance">
+                        <div class="performance-highlights">
+                            <div class="highlight-item">
+                                <span class="highlight-label">胜率</span>
+                                <span class="highlight-value win-rate">67.0%</span>
+                            </div>
+                            <div class="highlight-item">
+                                <span class="highlight-label">夏普比率</span>
+                                <span class="highlight-value sharpe">2.20</span>
+                            </div>
+                            <div class="highlight-item">
+                                <span class="highlight-label">最大回撤</span>
+                                <span class="highlight-value drawdown">8.0%</span>
+                            </div>
+                            <div class="highlight-item">
+                                <span class="highlight-label">总交易</span>
+                                <span class="highlight-value trades">120</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 分析洞察 -->
+                    <div class="top-strategy-insights">
+                        <div class="insight-row">
+                            <span class="insight-text">
+                                预期年化收益: <strong class="positive">57.6%</strong>
+                            </span>
+                            <span class="insight-text">
+                                风险收益比: <strong class="good">0.40</strong>
+                            </span>
+                            <span class="insight-text">
+                                置信度等级: <strong class="confidence-level high">高</strong>
+                            </span>
+                        </div>
+                        <div class="market-fit">
+                            <span class="market-tag">适用市场: 横盘震荡市场</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 展开的详细信息 -->
+                <div class="top-strategy-expanded">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;">
+                        <div style="text-align: center; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+                            <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">平均利润</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #10b981;">3.20%</div>
+                        </div>
+                        <div style="text-align: center; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+                            <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">波动率</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #f59e0b;">15.0%</div>
+                        </div>
+                        <div style="text-align: center; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+                            <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">配置状态</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #10b981;">✅ 已配置</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>📋 展示的完整数据字段</h3>
+            <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <h4 style="margin: 0 0 12px 0; color: #111827;">基本信息 (3项)</h4>
+                <ul style="margin: 0 0 16px 0; padding-left: 20px; color: #374151;">
+                    <li><strong>策略名称</strong> - 网格交易策略</li>
+                    <li><strong>评分</strong> - 10/10</li>
+                    <li><strong>匹配度</strong> - 80%</li>
+                    <li><strong>风险等级</strong> - 低</li>
+                </ul>
+
+                <h4 style="margin: 0 0 12px 0; color: #111827;">性能指标 (4项)</h4>
+                <ul style="margin: 0 0 16px 0; padding-left: 20px; color: #374151;">
+                    <li><strong>胜率</strong> - 67.0% (交易成功率)</li>
+                    <li><strong>夏普比率</strong> - 2.20 (风险调整收益)</li>
+                    <li><strong>最大回撤</strong> - 8.0% (最大亏损幅度)</li>
+                    <li><strong>总交易次数</strong> - 120 (历史交易数量)</li>
+                </ul>
+
+                <h4 style="margin: 0 0 12px 0; color: #111827;">扩展指标 (2项)</h4>
+                <ul style="margin: 0 0 16px 0; padding-left: 20px; color: #374151;">
+                    <li><strong>平均利润</strong> - 3.20% (单次交易平均收益)</li>
+                    <li><strong>波动率</strong> - 15.0% (收益波动程度)</li>
+                </ul>
+
+                <h4 style="margin: 0 0 12px 0; color: #111827;">智能分析 (3项)</h4>
+                <ul style="margin: 0 0 16px 0; padding-left: 20px; color: #374151;">
+                    <li><strong>预期年化收益</strong> - 57.6% (基于历史数据估算)</li>
+                    <li><strong>风险收益比</strong> - 0.40 (收益相对风险的比率)</li>
+                    <li><strong>置信度等级</strong> - 高 (策略可靠性的评估)</li>
+                </ul>
+
+                <h4 style="margin: 0 0 12px 0; color: #111827;">市场适应性 (1项)</h4>
+                <ul style="margin: 0 0 0 0; padding-left: 20px; color: #374151;">
+                    <li><strong>适用市场</strong> - 横盘震荡市场 (策略最佳适用环境)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
